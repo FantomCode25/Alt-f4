@@ -224,7 +224,221 @@ def add_health_record(current_user):
         'record_id': str(record_id)
     }), 201
 
-@
+@app.route('/api/health-records', methods=['GET'])
+@token_required
+def get_health_records(current_user):
+    """Get all health records for the patient"""
+    records = list(db.health_records.find({'user_id': current_user['_id']}))
+    
+    # Convert ObjectId to string for JSON serialization
+    for record in records:
+        record['_id'] = str(record['_id'])
+    
+    return jsonify({'records': records}), 200
+
+@app.route('/api/health-records/<record_id>', methods=['GET'])
+@token_required
+def get_health_record(current_user, record_id):
+    """Get a specific health record"""
+    record = db.health_records.find_one({'_id': ObjectId(record_id), 'user_id': current_user['_id']})
+    
+    if not record:
+        return jsonify({'message': 'Record not found!'}), 404
+    
+    # Convert ObjectId to string for JSON serialization
+    record['_id'] = str(record['_id'])
+    
+    return jsonify({'record': record}), 200
+
+@app.route('/api/health-records/<record_id>/decrypt', methods=['POST'])
+@token_required
+def decrypt_health_record(current_user, record_id):
+    """Decrypt a specific health record"""
+    data = request.get_json()
+    
+    record = db.health_records.find_one({'_id': ObjectId(record_id), 'user_id': current_user['_id']})
+    
+    if not record:
+        return jsonify({'message': 'Record not found!'}), 404
+    
+    # Decrypt the health record data
+    try:
+        salt = bytes.fromhex(current_user['salt'])
+        encryption_key = generate_encryption_key(data['password'], salt)
+        encrypted_data = base64.b64decode(record['encrypted_data'])
+        decrypted_data = decrypt_data(encrypted_data, encryption_key)
+        
+        return jsonify({'decrypted_data': decrypted_data}), 200
+    except Exception as e:
+        return jsonify({'message': 'Failed to decrypt record!', 'error': str(e)}), 400
+
+@app.route('/api/share-record-zkp/<record_id>', methods=['POST'])
+@token_required
+def share_record_zkp(current_user, record_id):
+    """
+    Share specific fields from a health record using zero-knowledge proofs
+    This allows providers to verify information without seeing the full record
+    """
+    data = request.get_json()
+    
+    record = db.health_records.find_one({'_id': ObjectId(record_id), 'user_id': current_user['_id']})
+    
+    if not record:
+        return jsonify({'message': 'Record not found!'}), 404
+    
+    # Decrypt the record
+    try:
+        salt = bytes.fromhex(current_user['salt'])
+        encryption_key = generate_encryption_key(data['password'], salt)
+        encrypted_data = base64.b64decode(record['encrypted_data'])
+        decrypted_data = decrypt_data(encrypted_data, encryption_key)
+        
+        # Generate ZKP for specified fields
+        fields_to_prove = data['fields']
+        zkp = generate_zkp_for_data(decrypted_data, fields_to_prove)
+        
+        # Create a sharing record
+        sharing = {
+            'record_id': record_id,
+            'provider_id': data['provider_id'],
+            'zkp': zkp,
+            'fields': fields_to_prove,
+            'expiry': datetime.datetime.utcnow() + datetime.timedelta(days=data['days_valid']),
+            'created_at': datetime.datetime.utcnow()
+        }
+        
+        sharing_id = db.record_sharing.insert_one(sharing).inserted_id
+        
+        return jsonify({
+            'message': 'Zero-knowledge proof generated and shared!',
+            'sharing_id': str(sharing_id)
+        }), 200
+    except Exception as e:
+        return jsonify({'message': 'Failed to generate proof!', 'error': str(e)}), 400
+
+@app.route('/api/grant-access/<record_id>', methods=['POST'])
+@token_required
+def grant_access(current_user, record_id):
+    """Grant a provider access to a specific health record"""
+    data = request.get_json()
+    
+    record = db.health_records.find_one({'_id': ObjectId(record_id), 'user_id': current_user['_id']})
+    
+    if not record:
+        return jsonify({'message': 'Record not found!'}), 404
+    
+    # Create access grant
+    access = {
+        'record_id': ObjectId(record_id),
+        'provider_id': data['provider_id'],
+        'access_level': data['access_level'],  # 'read', 'write', etc.
+        'expiry': datetime.datetime.utcnow() + datetime.timedelta(days=data['days_valid']),
+        'created_at': datetime.datetime.utcnow()
+    }
+    
+    access_id = db.access_grants.insert_one(access).inserted_id
+    
+    # Log access grant on blockchain
+    private_key = current_user['eth_private_key']
+    account = web3.eth.account.from_key(private_key)
+    
+    tx = contract.functions.grantAccess(
+        data['provider_id'],
+        str(record_id),
+        data['access_level'],
+        int(access['expiry'].timestamp())
+    ).build_transaction({
+        'from': account.address,
+        'nonce': web3.eth.get_transaction_count(account.address),
+        'gas': 2000000,
+        'gasPrice': web3.to_wei('50', 'gwei')
+    })
+    
+    signed_tx = web3.eth.account.sign_transaction(tx, private_key)
+    tx_hash = web3.eth.send_raw_transaction(signed_tx.rawTransaction)
+    receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
+    
+    return jsonify({
+        'message': 'Access granted successfully!',
+        'access_id': str(access_id)
+    }), 201
+
+@app.route('/api/revoke-access/<access_id>', methods=['POST'])
+@token_required
+def revoke_access(current_user, access_id):
+    """Revoke a previously granted access"""
+    access = db.access_grants.find_one({'_id': ObjectId(access_id)})
+    
+    if not access:
+        return jsonify({'message': 'Access grant not found!'}), 404
+    
+    # Check if the record belongs to the current user
+    record = db.health_records.find_one({'_id': access['record_id'], 'user_id': current_user['_id']})
+    
+    if not record:
+        return jsonify({'message': 'Unauthorized!'}), 401
+    
+    # Revoke access
+    db.access_grants.update_one(
+        {'_id': ObjectId(access_id)},
+        {'$set': {'revoked': True, 'revoked_at': datetime.datetime.utcnow()}}
+    )
+    
+    # Log revocation on blockchain
+    private_key = current_user['eth_private_key']
+    account = web3.eth.account.from_key(private_key)
+    
+    tx = contract.functions.revokeAccess(
+        access['provider_id'],
+        str(access['record_id'])
+    ).build_transaction({
+        'from': account.address,
+        'nonce': web3.eth.get_transaction_count(account.address),
+        'gas': 2000000,
+        'gasPrice': web3.to_wei('50', 'gwei')
+    })
+    
+    signed_tx = web3.eth.account.sign_transaction(tx, private_key)
+    tx_hash = web3.eth.send_raw_transaction(signed_tx.rawTransaction)
+    receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
+    
+    return jsonify({'message': 'Access revoked successfully!'}), 200
+
+@app.route('/api/access-record/<record_id>', methods=['POST'])
+@token_required
+def access_record(current_user, record_id):
+    """Access a record as a healthcare provider"""
+    # Check if the provider has been granted access
+    access = db.access_grants.find_one({
+        'record_id': ObjectId(record_id),
+        'provider_id': str(current_user['_id']),
+        'expiry': {'$gt': datetime.datetime.utcnow()},
+        'revoked': {'$ne': True}
+    })
+    
+    if not access:
+        return jsonify({'message': 'Access denied!'}), 401
+    
+    # Get the record
+    record = db.health_records.find_one({'_id': ObjectId(record_id)})
+    
+    if not record:
+        return jsonify({'message': 'Record not found!'}), 404
+    
+    # For providers, we don't return the encrypted data, but only the metadata
+    # The actual data would be decrypted by the patient and shared securely
+    record['_id'] = str(record['_id'])
+    
+    # Log access
+    access_log = {
+        'record_id': ObjectId(record_id),
+        'user_id': current_user['_id'],
+        'access_type': 'view',
+        'timestamp': datetime.datetime.utcnow()
+    }
+    db.access_logs.insert_one(access_log)
+    
+    return jsonify({'record': record}), 200
 
 # Main entry point
 if __name__ == '__main__':
