@@ -929,7 +929,7 @@ def doctor_dashboard():
     doctor_id = ObjectId(doctor_id_str)
         
     # Find doctor record
-    doctor = doctors.find_one({'_id': doctor_id})
+        doctor = doctors.find_one({'_id': doctor_id})
         
     # Query MongoDB to find patients where this doctor is authorized
     patient_list = list(patients.find({'authorized_doctors': doctor_id_str}))
@@ -1703,10 +1703,10 @@ def share_record(record_id):
         # Update the record in appropriate MongoDB collection
         result = None
         if is_pdf_storage:
-            result = pdf_storage.update_one(
+        result = pdf_storage.update_one(
                 {'_id': ObjectId(record_id)}, 
                 {'$addToSet': {'shared_with': provider_id_str}}
-            )   
+            )
         elif is_medical_file:
             result = medical_files.update_one(
                 {'_id': ObjectId(record_id)}, 

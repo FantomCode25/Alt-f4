@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Login - HealthChain{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-user-injured me-2"></i>Patient Portal</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>About Patient Portal</h5>
+                        <p>The Patient Portal is your secure gateway to manage your health records. Here you can:</p>
+                        <ul>
+                            <li>Access your complete medical history</li>
+                            <li>Share records with healthcare providers</li>
+                            <li>Manage emergency access settings</li>
+                            <li>View and update your health information</li>
+                        </ul>
+                        <hr>
+                        <p class="mb-0">Your health data is encrypted and stored securely on the blockchain, giving you complete control over who can access your information.</p>
+                    </div>
+
+                    <form method="POST" class="mt-4">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-light text-primary border">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login to Patient Portal
+                            </button>
+                            <a href="{{ url_for('register_patient') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-user-plus me-2"></i>New Patient? Register Here
+                            </a>
+                            <a href="{{ url_for('login') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Login Options
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

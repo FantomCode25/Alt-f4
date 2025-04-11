@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}View Medical Document - HealthChain{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="fas fa-file-medical me-2"></i>Medical Document Details</h4>
+                    <div>
+                        <span class="badge {% if processing_status == 'FULL_SUCCESS' %}bg-success{% elif processing_status == 'OCR_ONLY' %}bg-warning{% elif processing_status == 'OCR_FAILED' %}bg-danger{% else %}bg-secondary{% endif %} me-2">
+                            <i class="fas fa-cogs me-1"></i>
+                            {{ processing_status|replace('_', ' ')|title }}
+                        </span>
+                        <span class="badge {% if blockchain_verification == 'Verified' %}bg-success{% elif blockchain_verification == 'Tampered' %}bg-danger{% else %}bg-warning{% endif %}">
+                            <i class="fas {% if blockchain_verification == 'Verified' %}fa-shield-alt{% elif blockchain_verification == 'Tampered' %}fa-exclamation-triangle{% else %}fa-question-circle{% endif %} me-1"></i>
+                            {{ blockchain_verification }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Document Information</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th style="width: 35%">Document ID:</th>
+                                    <td><code>{{ file.doc_id }}</code></td>
+                                </tr>
+                                <tr>
+                                    <th>Filename:</th>
+                                    <td>{{ file.original_filename }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Document Type:</th>
+                                    <td>{{ file.file_type }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Description:</th>
+                                    <td>{{ file.description or 'Not provided' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Uploaded:</th>
+                                    <td>{{ file.upload_date | formatdatetime }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Uploaded By:</th>
+                                    <td>{{ file.uploader_type | capitalize }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Blockchain Information</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th style="width: 35%">Block Hash:</th>
+                                    <td><code class="small">{{ file.blockchain_hash }}</code></td>
+                                </tr>
+                                <tr>
+                                    <th>Block Index:</th>
+                                    <td>{{ file.blockchain_index }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Verification Status:</th>
+                                    <td>
+                                        <span class="badge {% if blockchain_verification == 'Verified' %}bg-success{% elif blockchain_verification == 'Tampered' %}bg-danger{% else %}bg-warning{% endif %}">
+                                            {{ blockchain_verification }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Processing Status:</th>
+                                    <td>
+                                        <span class="badge {% if processing_status == 'FULL_SUCCESS' %}bg-success{% elif processing_status == 'OCR_ONLY' %}bg-warning{% elif processing_status == 'OCR_FAILED' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                            {{ processing_status|replace('_', ' ')|title }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <ul class="nav nav-tabs" id="documentTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="extracted-tab" data-bs-toggle="tab" data-bs-target="#extracted" type="button" role="tab" aria-controls="extracted" aria-selected="false">
+                                <i class="fas fa-file-text me-2"></i>OCR Extracted Text
+                                {% if file_info.ocr_success %}
+                                <span class="badge bg-success ms-1"><i class="fas fa-check"></i></span>
+                                {% else %}
+                                <span class="badge bg-danger ms-1"><i class="fas fa-times"></i></span>
+                                {% endif %}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="true">
+                                <i class="fas fa-file-alt me-2"></i>AI Summary
+                                {% if file_info.summary_success %}
+                                <span class="badge bg-success ms-1"><i class="fas fa-check"></i></span>
+                                {% else %}
+                                <span class="badge bg-warning ms-1"><i class="fas fa-exclamation"></i></span>
+                                {% endif %}
+                            </button>
+                        </li>
+                        {% if file.file_extension|lower in ['jpg', 'jpeg', 'png', 'gif', 'bmp'] %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="image-tab" data-bs-toggle="tab" data-bs-target="#image" type="button" role="tab" aria-controls="image" aria-selected="false">
+                                <i class="fas fa-image me-2"></i>Image
+                            </button>
+                        </li>
+                        {% endif %}
+                    </ul>
+                    
+                    <div class="tab-content p-3 border border-top-0 rounded-bottom" id="documentTabContent">
+                        <div class="tab-pane fade" id="extracted" role="tabpanel" aria-labelledby="extracted-tab">
+                            <div class="d-flex justify-content-between mb-3">
+                                <h5><i class="fas fa-file-text me-2"></i>OCR Extracted Text</h5>
+                                <div>
+                                    <span class="badge bg-secondary">Displayed for Reference Only</span>
+                                </div>
+                            </div>
+                            
+                            {% if file_info.ocr_success %}
+                                <div class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;">
+                                    <pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">{{ display_text }}</pre>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <div class="d-flex">
+                                        <div class="me-3">
+                                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="alert-heading">Text Extraction Issue</h5>
+                                            <p class="mb-0">{{ display_text }}</p>
+                                            <p class="mt-2 small">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                OCR text extraction may fail due to low quality images, complex formatting, or handwritten text.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="tab-pane fade show active" id="summary" role="tabpanel" aria-labelledby="summary-tab">
+                            <div class="d-flex justify-content-between mb-3">
+                                <h5><i class="fas fa-file-alt me-2"></i>AI Summary</h5>
+                                <div>
+                                    <span class="badge bg-success">Stored in Blockchain</span>
+                                </div>
+                            </div>
+                            
+                            {% if file_info.summary_success %}
+                                <div class="bg-light p-3 rounded">
+                                    {{ summary_text | replace('\n', '<br>') | safe }}
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <div class="d-flex">
+                                        <div class="me-3">
+                                            <i class="fas fa-info-circle fa-2x"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="alert-heading">AI Summary Unavailable</h5>
+                                            <p class="mb-0">{{ summary_text }}</p>
+                                            {% if 'Google Generative API needs to be activated' in summary_text %}
+                                                <div class="mt-2">
+                                                    <a href="https://console.developers.google.com/apis/api/generativelanguage.googleapis.com/overview" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                        <i class="fas fa-external-link-alt me-1"></i> Activate API
+                                                    </a>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if file.file_extension|lower in ['jpg', 'jpeg', 'png', 'gif', 'bmp'] %}
+                        <div class="tab-pane fade" id="image" role="tabpanel" aria-labelledby="image-tab">
+                            <div class="text-center">
+                                <img src="/uploads/{{ file.filename }}" class="img-fluid rounded" alt="Medical Image" style="max-height: 500px;">
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <a href="javascript:history.back()" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back
+                        </a>
+                        <div>
+                            {% if file.file_path %}
+                            <a href="/uploads/{{ file.filename }}" class="btn btn-primary" target="_blank" download>
+                                <i class="fas fa-download me-2"></i>Download
+                            </a>
+                            {% endif %}
+                            <button type="button" class="btn btn-success ms-2" data-bs-toggle="modal" data-bs-target="#shareModal">
+                                <i class="fas fa-share-alt me-2"></i>Share
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="shareModalLabel">Share Medical Document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="/share_medical_file/{{ file._id }}" method="post">
+                    <div class="mb-3">
+                        <label for="shareWith" class="form-label">Share with:</label>
+                        <select class="form-select" id="shareWith" name="share_with_id" required>
+                            <option value="" selected disabled>-- Select Provider --</option>
+                            <optgroup label="Doctors">
+                                <!-- Will be populated dynamically with doctors -->
+                            </optgroup>
+                            <optgroup label="Hospitals">
+                                <!-- Will be populated dynamically with hospitals -->
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="shareUntil" class="form-label">Share until:</label>
+                        <input type="date" class="form-control" id="shareUntil" name="share_until" required>
+                    </div>
+                
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-share-alt me-2"></i>Share Document
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
