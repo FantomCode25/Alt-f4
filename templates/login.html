@@ -1,0 +1,148 @@
+<!-- templates/login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Bluetooth Auth System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .error {
+            color: red;
+            margin-bottom: 15px;
+        }
+        .bluetooth-section {
+            margin-top: 20px;
+            text-align: center;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
+        #status {
+            margin-top: 10px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Login</h1>
+        
+        {% if error %}
+        <p class="error">{{ error }}</p>
+        {% endif %}
+        
+        <form method="POST">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit">Login</button>
+        </form>
+        
+        <div class="bluetooth-section">
+            <h3>Bluetooth Login</h3>
+            <p>Bring your phone near to log in automatically</p>
+            <button id="scan-btn">Scan for Devices</button>
+            <p id="status">Not scanning</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('scan-btn').addEventListener('click', function() {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = "Scanning for devices...";
+            
+            // Check if Web Bluetooth API is available
+            if (!navigator.bluetooth) {
+                statusElement.textContent = "Bluetooth not available on this browser";
+                return;
+            }
+            
+            navigator.bluetooth.requestDevice({
+                // Filter for devices that advertise services
+                acceptAllDevices: true
+            })
+            .then(device => {
+                statusElement.textContent = `Found device: ${device.name}`;
+                
+                // Get the device ID (MAC address in our case)
+                const deviceId = device.id || 'AA:BB:CC:DD:EE:FF'; // For testing purposes
+                
+                // Send the device ID to the server
+                return fetch('/api/bluetooth-auth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        device_id: deviceId
+                    }),
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    statusElement.textContent = `Authentication successful. Redirecting...`;
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1000);
+                } else {
+                    statusElement.textContent = data.message || 'Authentication failed';
+                }
+            })
+            .catch(error => {
+                statusElement.textContent = `Error: ${error}`;
+                console.error('Bluetooth error:', error);
+            });
+        });
+    </script>
+</body>
+</html>

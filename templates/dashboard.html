@@ -1,0 +1,64 @@
+
+<!-- templates/dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Bluetooth Auth System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .logout {
+            background-color: #f44336;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .logout:hover {
+            background-color: #d32f2f;
+        }
+        .content {
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome, {{ username }}!</h1>
+            <a href="/logout" class="logout">Logout</a>
+        </div>
+        
+        <div class="content">
+            <p>You are successfully logged in. This is your secure dashboard.</p>
+            <p>This page is only accessible after you've authenticated either with your password or via Bluetooth proximity.</p>
+            
+            <h2>Bluetooth Login Feature</h2>
+            <p>Your account is linked to a Bluetooth device. When your phone is detected near your computer, you can login automatically without entering a password.</p>
+        </div>
+    </div>
+</body>
+</html>
