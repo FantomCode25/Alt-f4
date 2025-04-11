@@ -1,0 +1,29 @@
+<!-- doctor_dashboard.html -->
+{% extends "base.html" %}
+
+{% block title %}Doctor Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4><i class="bi bi-person-badge"></i> Doctor Dashboard</h4>
+                </div>
+                <div class="card-body">
+                    <h5>Welcome, Dr. {{ session.name }}!</h5>
+                    <p>You are logged in as a doctor.</p>
+                    
+                    <div class="mt-4">
+                        <p>What would you like to do today?</p>
+                        <a href="{{ url_for('register_patient') }}" class="btn btn-primary">
+                            <i class="bi bi-person-plus"></i> Register New Patient
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

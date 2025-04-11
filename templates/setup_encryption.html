@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Setup Encryption - HealthChain{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-shield-lock"></i> Setup Patient Encryption</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('setup_encryption', patient_id=patient_id) }}">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> This will generate a new encryption key pair for the patient.
+                            The private key will be stored securely, and the public key will be registered on the blockchain.
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Patient Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="blood_group" class="form-label">Blood Group</label>
+                            <input type="text" class="form-control" id="blood_group" name="blood_group" required>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> 
+                            <strong>Important:</strong> Once encryption is set up, all medical records will be encrypted using the patient's public key.
+                            Only the patient will be able to decrypt their records using their private key.
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-shield-lock"></i> Setup Encryption
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

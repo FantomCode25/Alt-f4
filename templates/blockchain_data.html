@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Blockchain Data</h2>
+    
+    <!-- Contract Information -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4><i class="bi bi-info-circle"></i> Contract Information</h4>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <tr>
+                    <th>Contract Address:</th>
+                    <td>{{ contract_info.address }}</td>
+                </tr>
+                <tr>
+                    <th>Network ID:</th>
+                    <td>{{ contract_info.network }}</td>
+                </tr>
+                <tr>
+                    <th>Current Block:</th>
+                    <td>{{ contract_info.block_number }}</td>
+                </tr>
+                <tr>
+                    <th>Total Hospitals:</th>
+                    <td>{{ contract_info.total_hospitals }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4><i class="bi bi-arrow-left-right"></i> Recent Transactions</h4>
+        </div>
+        <div class="card-body">
+            {% if transactions %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Transaction Hash</th>
+                                <th>From</th>
+                                <th>To</th>
+                                <th>Value</th>
+                                <th>Block</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tx in transactions %}
+                            <tr>
+                                <td><code>{{ tx.hash[:10] }}...{{ tx.hash[-8:] }}</code></td>
+                                <td><code>{{ tx.from[:6] }}...{{ tx.from[-4:] }}</code></td>
+                                <td><code>{{ tx.to[:6] }}...{{ tx.to[-4:] }}</code></td>
+                                <td>{{ tx.value }}</td>
+                                <td>{{ tx.block }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted">No recent transactions found.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Events -->
+    <div class="card">
+        <div class="card-header">
+            <h4><i class="bi bi-calendar-event"></i> Contract Events</h4>
+        </div>
+        <div class="card-body">
+            {% if events %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Event Type</th>
+                                <th>Details</th>
+                                <th>Block</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event in events %}
+                            <tr>
+                                <td>{{ event.type }}</td>
+                                <td>
+                                    {% if event.type == 'HospitalRegistered' %}
+                                        <strong>{{ event.name }}</strong> ({{ event.address[:6] }}...{{ event.address[-4:] }})
+                                    {% elif event.type == 'DoctorRegistered' %}
+                                        <strong>Dr. {{ event.name }}</strong> - {{ event.specialization }} ({{ event.address[:6] }}...{{ event.address[-4:] }})
+                                    {% elif event.type == 'ExaminationAdded' %}
+                                        Patient ID: {{ event.patient_id }}<br>
+                                        Diagnosis: {{ event.diagnosis }}<br>
+                                        Date: {{ event.date }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ event.block }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted">No events found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

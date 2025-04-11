@@ -1,117 +1,87 @@
 <!-- register_patient.html -->
 {% extends "base.html" %}
 
-{% block title %}Register as Patient - HealthChain{% endblock %}
+{% block title %}Register Patient - Blockchain Healthcare System{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
+<div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card border-0 shadow-lg">
-                <div class="card-header bg-gradient-primary text-white py-4">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-user-plus fa-2x me-3"></i>
-                        <div>
-                            <h4 class="mb-0">Register as Patient</h4>
-                            <small class="opacity-75">Create your secure health record account</small>
-                        </div>
-                    </div>
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-person-plus"></i> Register New Patient</h4>
                 </div>
-                <div class="card-body p-4">
-                    <form method="POST" action="{{ url_for('register_patient') }}" class="needs-validation" novalidate>
-                        <div class="row g-4">
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="text" class="form-control" id="name" name="name" placeholder="Full Name" required>
-                                    <label for="name"><i class="fas fa-user me-2"></i>Full Name</label>
-                                    <div class="invalid-feedback">Please enter your full name</div>
-                                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('register_patient') }}" id="patientForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="name" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="email" class="form-control" id="email" name="email" placeholder="Email Address" required>
-                                    <label for="email"><i class="fas fa-envelope me-2"></i>Email Address</label>
-                                    <div class="invalid-feedback">Please enter a valid email address</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
-                                    <label for="password"><i class="fas fa-lock me-2"></i>Password</label>
-                                    <div class="invalid-feedback">Please enter a password</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" placeholder="Date of Birth" required>
-                                    <label for="date_of_birth"><i class="fas fa-calendar me-2"></i>Date of Birth</label>
-                                    <div class="invalid-feedback">Please select your date of birth</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <select class="form-select" id="blood_group" name="blood_group" required>
-                                        <option value="" selected disabled>Select Blood Group</option>
-                                        <option value="A+">A+</option>
-                                        <option value="A-">A-</option>
-                                        <option value="B+">B+</option>
-                                        <option value="B-">B-</option>
-                                        <option value="AB+">AB+</option>
-                                        <option value="AB-">AB-</option>
-                                        <option value="O+">O+</option>
-                                        <option value="O-">O-</option>
-                                    </select>
-                                    <label for="blood_group"><i class="fas fa-tint me-2"></i>Blood Group</label>
-                                    <div class="invalid-feedback">Please select your blood group</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="tel" class="form-control" id="phone" name="phone" placeholder="Phone Number" required>
-                                    <label for="phone"><i class="fas fa-phone me-2"></i>Phone Number</label>
-                                    <div class="invalid-feedback">Please enter your phone number</div>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <div class="form-floating">
-                                    <textarea class="form-control" id="address" name="address" placeholder="Full Address" style="height: 100px" required></textarea>
-                                    <label for="address"><i class="fas fa-location-dot me-2"></i>Full Address</label>
-                                    <div class="invalid-feedback">Please enter your address</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="text" class="form-control" id="emergency_contact" name="emergency_contact" placeholder="Emergency Contact (Name & Phone)" required>
-                                    <label for="emergency_contact"><i class="fas fa-star-of-life me-2"></i>Emergency Contact</label>
-                                    <div class="invalid-feedback">Please enter emergency contact details</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="text" class="form-control" id="metamask_address" name="metamask_address" placeholder="Your Wallet Address (0x...)" required>
-                                    <label for="metamask_address"><i class="fas fa-wallet me-2"></i>MetaMask Wallet Address</label>
-                                    <div class="invalid-feedback">Please connect your MetaMask wallet</div>
-                                    <small class="form-text text-muted">Required for blockchain interactions and data ownership.</small>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <div class="form-floating">
-                                    <input type="text" class="form-control" id="allergies" name="allergies" placeholder="List known allergies (comma-separated)">
-                                    <label for="allergies"><i class="fas fa-allergies me-2"></i>Known Allergies (Optional)</label>
-                                    <small class="form-text text-muted">Enter allergies separated by commas (e.g., Penicillin, Nuts, Aspirin).</small>
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
                             </div>
                         </div>
-                        
-                        <div class="mt-5">
-                            <div class="d-grid gap-3">
-                                <button type="submit" class="btn btn-primary btn-lg py-3">
-                                    <i class="fas fa-user-plus me-2"></i>Register as Patient
-                                </button>
-                                <a href="{{ url_for('login') }}" class="btn btn-outline-secondary">
-                                    <i class="fas fa-arrow-left me-2"></i>Back to Login
-                                </a>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="date_of_birth" class="form-label">Date of Birth</label>
+                                <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
                             </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="blood_group" class="form-label">Blood Group</label>
+                                <select class="form-select" id="blood_group" name="blood_group" required>
+                                    <option value="">Select Blood Group</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            <textarea class="form-control" id="address" name="address" rows="2" required></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="emergency_contact" class="form-label">Emergency Contact</label>
+                                <input type="text" class="form-control" id="emergency_contact" name="emergency_contact" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="metamask_address" class="form-label">MetaMask Address</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="metamask_address" name="metamask_address" required readonly>
+                                <button class="btn btn-outline-primary" type="button" id="connectMetamask">
+                                    <i class="bi bi-wallet2"></i> Connect MetaMask
+                                </button>
+                            </div>
+                            <small class="form-text text-muted">
+                                Connect your MetaMask wallet to control access to your medical data. 
+                                This address will be used to manage who can view your health records.
+                            </small>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-person-plus"></i> Register Patient
+                            </button>
+                            <a href="{{ url_for('view_patients') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Patients
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -119,116 +89,26 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
 <script>
-    // Check if MetaMask is installed and add connect button
-    window.addEventListener('load', function() {
-        const metamaskAddressInput = document.getElementById('metamask_address');
-        if (!metamaskAddressInput) return; 
-        const parentDiv = metamaskAddressInput.parentNode;
-
+    document.getElementById('connectMetamask').addEventListener('click', async () => {
         if (typeof window.ethereum !== 'undefined') {
-            console.log('MetaMask is installed!');
-            const metamaskBtn = document.createElement('button');
-            metamaskBtn.type = 'button';
-            metamaskBtn.className = 'btn btn-outline-primary btn-sm mt-2';
-            metamaskBtn.innerHTML = '<i class="fab fa-ethereum me-1"></i> Connect MetaMask';
-            
-            if (parentDiv && parentDiv.classList.contains('form-floating')) {
-                parentDiv.parentNode.insertBefore(metamaskBtn, parentDiv.nextSibling);
-            } else if (parentDiv) {
-                parentDiv.appendChild(metamaskBtn);
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                if (accounts.length > 0) {
+                    document.getElementById('metamask_address').value = accounts[0];
+                    // Update the status indicator in the navbar
+                    const metamaskStatus = document.getElementById('metamaskStatus');
+                    metamaskStatus.className = 'metamask-status metamask-connected';
+                    metamaskStatus.innerHTML = `<i class="bi bi-wallet2"></i> Connected: ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`;
+                }
+            } catch (error) {
+                console.error('Error connecting to MetaMask:', error);
+                alert('Failed to connect to MetaMask. Please make sure MetaMask is installed and unlocked.');
             }
-            
-            metamaskBtn.addEventListener('click', function(event) {
-                event.preventDefault();
-                connectMetaMask();
-            });
         } else {
-            console.log('MetaMask is not installed!');
-            const infoText = document.createElement('small');
-            infoText.className = 'd-block text-danger mt-1';
-            infoText.textContent = 'MetaMask extension is required for wallet connection.';
-            if (parentDiv && parentDiv.classList.contains('form-floating')) {
-                parentDiv.parentNode.insertBefore(infoText, parentDiv.nextSibling);
-            } else if (parentDiv) {
-                parentDiv.appendChild(infoText);
-            }
+            alert('MetaMask is not installed. Please install MetaMask to continue.');
         }
     });
-    
-    async function connectMetaMask() {
-        const metamaskAddressInput = document.getElementById('metamask_address');
-        if (!metamaskAddressInput) return;
-        try {
-            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-            const account = accounts[0];
-            metamaskAddressInput.value = account;
-            console.log('Connected account:', account);
-            metamaskAddressInput.dispatchEvent(new Event('input'));
-            metamaskAddressInput.dispatchEvent(new Event('change'));
-        } catch (error) {
-            console.error('Error connecting to MetaMask:', error);
-            alert(`Error connecting wallet: ${error.message || 'Unknown error'}`); 
-        }
-    }
-
-    // Form validation
-    (function () {
-        'use strict'
-        const forms = document.querySelectorAll('.needs-validation')
-        Array.from(forms).forEach(form => {
-            form.addEventListener('submit', event => {
-                if (!form.checkValidity()) {
-                    event.preventDefault()
-                    event.stopPropagation()
-                }
-                form.classList.add('was-validated')
-            }, false)
-        })
-    })()
 </script>
-
-<style>
-    .bg-gradient-primary {
-        background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
-    }
-    
-    .card {
-        border-radius: 1rem;
-        overflow: hidden;
-    }
-    
-    .form-control, .form-select {
-        border-radius: 0.5rem;
-        border: 1px solid #dee2e6;
-        padding: 1rem 0.75rem;
-    }
-    
-    .form-control:focus, .form-select:focus {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-    }
-    
-    .btn-primary {
-        background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
-        border: none;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
-    }
-    
-    .form-floating > label {
-        padding: 1rem 0.75rem;
-    }
-    
-    .invalid-feedback {
-        font-size: 0.875rem;
-    }
-</style>
 {% endblock %}

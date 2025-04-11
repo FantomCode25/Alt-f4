@@ -1,193 +1,115 @@
 <!-- index.html -->
 {% extends "base.html" %}
 
-{% block title %}Home{% endblock %}
-
-{% block head_extra %}
-    {# Add AOS library for scroll animations #}
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <style>
-        .hero-section {
-            /* Use the purple gradient defined in base.html */
-            background: var(--phr-gradient);
-            /* Fallback if variables not supported (optional) */
-            /* background: linear-gradient(90deg, #7c3aed 0%, #d946ef 100%); */
-            /* Remove image background if desired, or keep as overlay */
-            /* background-size: cover; */
-            /* background-position: center; */
-            color: white;
-            padding: 6rem 1rem;
-            text-align: center;
-            margin-top: -24px; /* Adjust based on fixed navbar */
-            border-bottom-left-radius: 1.5rem;
-            border-bottom-right-radius: 1.5rem;
-            margin-bottom: 3rem;
-        }
-        .hero-section h1 { font-weight: 700; font-size: 3rem;}
-        .hero-section p { font-size: 1.25rem; max-width: 700px; margin-left: auto; margin-right: auto; opacity: 0.9; }
-        .feature-icon {
-            font-size: 2.5rem;
-            color: var(--bs-primary); /* Use primary purple */
-            margin-bottom: 1rem;
-        }
-        .section-title {
-            text-align: center;
-            margin-bottom: 3rem;
-            font-weight: 600;
-            color: var(--bs-dark);
-        }
-        .how-it-works-step {
-            text-align: center;
-        }
-         .how-it-works-step i {
-             font-size: 3rem;
-             margin-bottom: 1rem;
-             color: var(--bs-info); /* Use cyan for these icons */
-         }
-         .step-arrow i {
-             font-size: 2rem;
-             color: #adb5bd;
-             line-height: 5; /* Align vertically */
-         }
-         @media (max-width: 767px) {
-            .step-arrow { display: none; }
-            .how-it-works-step { margin-bottom: 2rem; }
-         }
-    </style>
-{% endblock %}
+{% block title %}Healthcare System - Home{% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
-<section class="hero-section">
-    <div class="container" data-aos="fade-up">
-        <h1 class="display-4 mb-3">Own Your Health Story</h1>
-        <p class="lead mb-4">A Decentralized Personal Health Record (PHR) System putting you in control. Securely manage and share your medical data using blockchain technology.</p>
-        <div>
-            <a href="{{ url_for('login') }}" class="btn btn-light btn-lg me-2">
-                <i class="fas fa-sign-in-alt me-2"></i>Login
-            </a>
-            <a href="{{ url_for('emergency_access') }}" class="btn btn-danger btn-lg">
-                <i class="fas fa-exclamation-triangle me-2"></i>Emergency Access
-            </a>
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="p-5">
+                <h1 class="display-4">Welcome to Healthcare System</h1>
+                <p class="lead">A secure platform for managing patient information and healthcare records.</p>
+                <hr class="my-4">
+                <p>Login or register to access the system.</p>
+                <div class="d-grid gap-2 d-md-flex">
+                    <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg me-md-2">
+                        <i class="bi bi-box-arrow-in-right"></i> Login
+                    </a>
+                    <a href="{{ url_for('register_patient') }}" class="btn btn-outline-primary btn-lg">
+                        <i class="bi bi-person-plus"></i> Register as Patient
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <img src="https://via.placeholder.com/600x400?text=Healthcare+System" class="img-fluid rounded shadow" alt="Healthcare System">
         </div>
     </div>
-</section>
 
-<!-- Emergency Access Form (Removing this section) -->
-<!--
-<section id="emergency-access" class="container my-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-header bg-danger text-white">
-                    <h4 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Emergency Access</h4>
+    <div class="row mt-5">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-shield-lock text-primary" style="font-size: 3rem;"></i>
+                    <h3 class="card-title mt-3">Secure</h3>
+                    <p class="card-text">Your medical data is securely stored and protected.</p>
                 </div>
-                <div class="card-body">
-                    <div class="alert alert-warning">
-                        <i class="fas fa-info-circle me-2"></i>
-                        This portal is for emergency medical personnel only. Unauthorized access is prohibited.
-                    </div>
-                    <form method="POST" action="{{ url_for('emergency_access') }}">
-                        <div class="mb-3">
-                            <label for="patient_name" class="form-label">Patient Name</label>
-                            <input type="text" class="form-control" id="patient_name" name="patient_name" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="emergency_pin" class="form-label">Emergency PIN</label>
-                            <input type="password" class="form-control" id="emergency_pin" name="emergency_pin" required>
-                            <div class="form-text">Enter the 4-6 digit emergency PIN provided by the patient.</div>
-                        </div>
-                        <button type="submit" class="btn btn-danger w-100">
-                            <i class="fas fa-unlock me-2"></i>Access Emergency Information
-                        </button>
-                    </form>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-people text-primary" style="font-size: 3rem;"></i>
+                    <h3 class="card-title mt-3">Accessible</h3>
+                    <p class="card-text">Easy access for patients, doctors, and hospitals.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-laptop-medical text-primary" style="font-size: 3rem;"></i>
+                    <h3 class="card-title mt-3">Modern</h3>
+                    <p class="card-text">Built with modern technology for reliable performance.</p>
                 </div>
             </div>
         </div>
     </div>
-</section>
--->
-
-<!-- Features Section -->
-<section class="container my-5 py-4">
-    <h2 class="section-title" data-aos="fade-up">Why Choose Our Decentralized PHR?</h2>
-    <div class="row text-center gy-4">
-        <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
-            <i class="fas fa-user-lock feature-icon"></i>
-            <h5>Patient Control</h5>
-            <p class="text-muted">You own your data. Grant granular, time-limited access to doctors and hospitals only when you choose.</p>
-        </div>
-        <div class="col-md-3" data-aos="fade-up" data-aos-delay="200">
-            <i class="fas fa-shield-alt feature-icon"></i>
-            <h5>Enhanced Security</h5>
-            <p class="text-muted">Leverages strong encryption for data at rest and blockchain for tamper-proof access logs.</p>
-        </div>
-        <div class="col-md-3" data-aos="fade-up" data-aos-delay="300">
-            <i class="fas fa-cubes feature-icon"></i>
-            <h5>Blockchain Transparency</h5>
-            <p class="text-muted">All access grants and key events are recorded immutably on the blockchain for auditing.</p>
-        </div>
-        <div class="col-md-3" data-aos="fade-up" data-aos-delay="400">
-            <i class="fas fa-share-alt feature-icon"></i>
-            <h5>Seamless Sharing</h5>
-            <p class="text-muted">Easily share specific records or data fields with providers for specific durations.</p>
-        </div>
-    </div>
-</section>
-
-<!-- How It Works Section -->
-<section class="container my-5 py-5 bg-light rounded shadow-sm">
-    <h2 class="section-title" data-aos="fade-up">How It Works</h2>
-    <div class="row align-items-center">
-        <div class="col-md col-sm-6 how-it-works-step" data-aos="fade-right">
-            <i class="fas fa-user-plus"></i>
-            <h6>1. Register</h6>
-            <p class="text-muted small">Create your secure account & link your MetaMask wallet.</p>
-        </div>
-        <div class="col-md-auto step-arrow" data-aos="fade-up">
-            <i class="fas fa-long-arrow-alt-right"></i>
-        </div>
-        <div class="col-md col-sm-6 how-it-works-step" data-aos="fade-right" data-aos-delay="100">
-            <i class="fas fa-key"></i>
-            <h6>2. Encrypt</h6>
-            <p class="text-muted small">Your data is encrypted using keys you control.</p>
-        </div>
-         <div class="col-md-auto step-arrow" data-aos="fade-up">
-            <i class="fas fa-long-arrow-alt-right"></i>
-        </div>
-        <div class="col-md col-sm-6 how-it-works-step" data-aos="fade-right" data-aos-delay="200">
-             <i class="fas fa-database"></i> / <i class="fas fa-link"></i>
-            <h6>3. Store & Link</h6>
-            <p class="text-muted small">Encrypted data stored securely (off-chain), hash/link stored on blockchain.</p>
-        </div>
-         <div class="col-md-auto step-arrow" data-aos="fade-up">
-            <i class="fas fa-long-arrow-alt-right"></i>
-        </div>
-        <div class="col-md col-sm-6 how-it-works-step" data-aos="fade-right" data-aos-delay="300">
-            <i class="fas fa-user-shield"></i>
-            <h6>4. Grant Access</h6>
-            <p class="text-muted small">Use the smart contract to grant time-bound, specific access to providers.</p>
-        </div>
-    </div>
-</section>
-
-<!-- Call to Action Footer -->
-<section class="container text-center my-5 py-4">
-     <h3 data-aos="fade-up">Ready to take control of your health data?</h3>
-     <div class="mt-4" data-aos="fade-up" data-aos-delay="100">
-        <a href="{{ url_for('register_patient') }}" class="btn btn-primary btn-lg me-2"><i class="fas fa-user-plus me-1"></i>Register Now</a>
-        <a href="{{ url_for('login') }}" class="btn btn-success btn-lg"><i class="fas fa-arrow-right-to-bracket me-1"></i>Login</a>
-    </div>
-</section>
-
+</div>
 {% endblock %}
 
-{% block scripts %}
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script>
-        AOS.init({
-            duration: 800, // Animation duration
-            once: true // Only animate elements once
-        });
-    </script>
+{% block extra_css %}
+<style>
+    .hero {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .wave-container {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1;
+    }
+    
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(13, 110, 253, 0.1);
+        border-radius: 50%;
+    }
+    
+    .step-number {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .card {
+        transition: transform 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script>
+    AOS.init({
+        once: true,
+        disable: 'mobile'
+    });
+</script>
 {% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Patient List - Healthcare System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4><i class="bi bi-people"></i> Patient List</h4>
+        </div>
+        <div class="card-body">
+            {% if patients %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Blood Group</th>
+                                <th>Phone</th>
+                                <th>Date Registered</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for patient in patients %}
+                                <tr>
+                                    <td>{{ patient.name }}</td>
+                                    <td>{{ patient.email }}</td>
+                                    <td>{{ patient.blood_group }}</td>
+                                    <td>{{ patient.phone }}</td>
+                                    <td>{{ patient.date_registered }}</td>
+                                    <td>
+                                        <a href="{{ url_for('patient_details', patient_id=patient._id) }}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-eye"></i> View Details
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No patients found in the system.
+                </div>
+            {% endif %}
+            
+            {% if session.user_type != 'patient' %}
+                <div class="mt-3">
+                    <a href="{{ url_for('register_patient') }}" class="btn btn-success">
+                        <i class="bi bi-person-plus"></i> Register New Patient
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 
