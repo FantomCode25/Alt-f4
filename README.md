@@ -17,7 +17,7 @@ Our project aims to address these challenges by developing a decentralized platf
 
 - **Decentralized Storage:** Utilize blockchain technology for secure, tamper-proof health record storage.
 - **Patient Control:** Enable patients to manage and authorize access to their health data.
-- **Interoperability:** Implement FHIR and HL7 standards to facilitate seamless data sharing across healthcare providers.
+- **Interoperability:**  facilitate seamless data sharing across healthcare providers.
 - **Security:** Employ robust encryption and authentication mechanisms to protect patient information.
 - **User-Friendly Interface:** Design an intuitive interface for easy navigation and management of health records.
 
