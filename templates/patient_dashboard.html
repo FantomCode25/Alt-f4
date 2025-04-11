@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4"><i class="fas fa-tachometer-alt me-2"></i>Welcome, {{ patient.name }}!</h2>
+
+    <div class="row">
+        <!-- Column 1: Patient Info & Actions -->
+        <div class="col-lg-4">
+            <!-- Patient Details Card -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header">
+                    <i class="fas fa-user-circle me-2"></i>Your Information
+                </div>
+                <div class="card-body">
+                    <p><strong>Name:</strong> {{ patient.name }}</p>
+                    <p><strong>Email:</strong> {{ patient.email }}</p>
+                    <p><strong>DOB:</strong> {{ patient.date_of_birth }}</p> 
+                    <p><strong>Blood Group:</strong> {{ patient.blood_group }}</p>
+                    <p><strong>Address:</strong> {{ patient.address }}</p>
+                    <p><strong>Phone:</strong> {{ patient.phone }}</p>
+                    <p><strong>Emergency Contact:</strong> {{ patient.emergency_contact }}</p>
+                    <p><strong>Registered:</strong> {{ patient.date_registered | formatdatetime('date_only') }}</p>
+                    <p class="mb-1"><strong>MetaMask Address:</strong></p>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control form-control-sm bg-light" value="{{ patient.metamask_address }}" id="patientAddress" readonly>
+                        <button class="btn btn-outline-secondary btn-sm" type="button" onclick="copyToClipboard('patientAddress')" title="Copy Address">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    <!-- Add Edit Profile Button if needed -->
+                </div>
+            </div>
+
+            <!-- Provider Selection Card (If applicable - maybe show selected) -->
+            {% if patient.selected_hospital_id or patient.selected_doctor_ids %}
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header">
+                     <i class="fas fa-hospital-user me-2"></i>Initially Selected Providers
+                 </div>
+                 <div class="card-body">
+                     {% if selected_hospital_name %}
+                         <p class="mb-1"><strong>Hospital:</strong> {{ selected_hospital_name }}</p>
+                     {% elif patient.selected_hospital_id %}
+                         <p class="mb-1 text-muted"><strong>Hospital:</strong> [Name not found for ID {{ patient.selected_hospital_id }}]</p>
+                     {% endif %}
+                     
+                     {% if selected_doctors_info %}
+                         <p class="mb-1 mt-2"><strong>Doctors:</strong></p>
+                         <ul class="list-unstyled ms-3">
+                             {% for doc_info in selected_doctors_info %}
+                             <li><i class="fas fa-stethoscope fa-fw me-1 text-muted"></i>{{ doc_info.name }}</li>
+                             {% endfor %}
+                         </ul>
+                     {% elif patient.selected_doctor_ids %}
+                          <p class="mb-1 mt-2 text-muted"><strong>Doctors:</strong> [Could not retrieve doctor names]</p>
+                     {% endif %}
+                     <small class="text-muted d-block mt-2">This reflects your initial selection. Current access is managed below.</small>
+                 </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <!-- Column 2: Medical Data & Access Control -->
+        <div class="col-lg-8">
+            <!-- Medical Records Card -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header">
+                    <i class="fas fa-notes-medical me-2"></i>Uploaded Medical Records
+                </div>
+                <div class="card-body">
+                    {% if records %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover table-sm caption-top">
+                                <caption>List of your uploaded medical documents.</caption>
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Filename</th>
+                                        <th>Abstract/Notes</th>
+                                        <th>Upload Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {% for record in records %}
+                                    <tr>
+                                        <td><i class="fas fa-file-pdf text-danger me-2"></i>{{ record.filename }}</td>
+                                        <td>{{ record.abstract | default('N/A', true) }}</td>
+                                        <td>{{ record.upload_date | formatdatetime('short') }}</td>
+                                        <td>
+                                            {# Action Buttons #}
+                                            <div class="ms-2 d-flex">
+                                                {# View Button #}
+                                                <a href="{{ url_for('view_record', record_id=record._id) }}" class="btn btn-sm btn-outline-info me-1" title="View Record Content">
+                                                     <i class="fas fa-eye"></i>
+                                                </a>
+                                                {# Share Button (Triggers Modal) #}
+                                                <button type="button" class="btn btn-sm btn-outline-success me-1" data-bs-toggle="modal" data-bs-target="#shareModal_{{ record._id }}" title="Share Record">
+                                                    <i class="fas fa-share-alt"></i>
+                                                </button>
+                                                {# Delete Button/Form #}
+                                                <form action="{{ url_for('delete_record', record_id=record._id) }}" method="post" onsubmit="return confirm('Are you sure you want to delete this record? This cannot be undone.');" class="d-inline">
+                                                     {# CSRF token would be good here in production #}
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Record">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Share Modal for this Record -->
+                                    <div class="modal fade" id="shareModal_{{ record._id }}" tabindex="-1" aria-labelledby="shareModalLabel_{{ record._id }}" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <form action="{{ url_for('share_record', record_id=record._id) }}" method="post">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="shareModalLabel_{{ record._id }}">Share Record: {{ record.filename | truncate(30) }}</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>Select the doctor or hospital you want to share this specific record with.</p>
+                                                        <div class="mb-3">
+                                                            <label for="share_with_id_{{ record._id }}" class="form-label">Select Provider:</label>
+                                                            <select class="form-select" id="share_with_id_{{ record._id }}" name="share_with_id" required>
+                                                                <option value="" selected disabled>-- Choose Doctor or Hospital --</option>
+                                                                {% if all_hospitals %}
+                                                                    <optgroup label="Hospitals">
+                                                                        {% for hospital in all_hospitals %}
+                                                                        <option value="hosp_{{ hospital._id }}">{{ hospital.name }}</option>
+                                                                        {% endfor %}
+                                                                    </optgroup>
+                                                                {% endif %}
+                                                                {% if all_doctors %}
+                                                                    <optgroup label="Doctors">
+                                                                        {% for doctor in all_doctors %}
+                                                                        <option value="doc_{{ doctor._id }}">{{ doctor.name }}</option>
+                                                                        {% endfor %}
+                                                                    </optgroup>
+                                                                {% endif %}
+                                                            </select>
+                                                            <small class="text-muted">They will gain access only to this specific record.</small>
+                                                        </div>
+                                                        {# Optional: Add duration or specific field selection later #}
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-success"><i class="fas fa-share-alt me-1"></i>Share Record</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- End Share Modal -->
+
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-light text-center" role="alert">
+                           <i class="fas fa-folder-open fa-2x text-muted mb-2"></i><br>
+                           You haven't uploaded any medical records yet.
+                           <a href="{{ url_for('add_medical_record', patient_id=patient._id) }}" class="btn btn-primary btn-sm mt-2">Upload your first record</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Access Control Card -->
+            <div class="card mb-4 shadow-sm">
+                 <div class="card-header bg-primary text-white">
+                     <i class="fas fa-user-shield me-2"></i>Access Control
+                 </div>
+                 <div class="card-body">
+                    <p>Manage who can access your medical data.</p>
+                    
+                    <!-- Emergency Access Setup -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-danger text-white">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Emergency Access
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted small">Set up emergency access PIN for life-threatening situations. This PIN will allow paramedics to access critical medical information when you're unable to provide consent.</p>
+                            
+                            <form method="POST" action="{{ url_for('setup_emergency_pin') }}" class="mt-3">
+                                <div class="mb-3">
+                                    <label for="emergency_pin" class="form-label">Emergency PIN (4-6 digits)</label>
+                                    <input type="password" class="form-control" id="emergency_pin" name="emergency_pin" pattern="[0-9]{4,6}" required>
+                                    <div class="form-text">This PIN will be used by emergency responders to access your critical medical information.</div>
+                                </div>
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-shield-alt me-1"></i>Set Emergency PIN
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    {# Comment out the blockchain-based authorized users list for now #}
+                    {#
+                    <h6>Currently Authorized Users:</h6>
+                    {% if authorized_users %}
+                         <ul class="list-group list-group-flush">
+                            {% for user in authorized_users %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas {{ 'fa-user-md' if user.type == 'Doctor' else 'fa-hospital' }} me-2"></i>
+                                    <strong>{{ user.name }}</strong> ({{ user.type }})
+                                    <br><small class="text-muted code-font">{{ user.address }}</small>
+                                </div>
+                                <form action="{{ url_for('revoke_access', patient_id=patient._id) }}" method="POST" class="ms-2">
+                                     <input type="hidden" name="address" value="{{ user.address }}">
+                                     <button type="submit" class="btn btn-outline-danger btn-sm" title="Revoke Access" onclick="return confirm('Are you sure you want to revoke access for {{ user.name }}?');">
+                                         <i class="fas fa-user-slash"></i>
+                                     </button>
+                                 </form>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                         <div class="alert alert-light text-center" role="alert">
+                            <i class="fas fa-users-slash fa-2x text-muted mb-2"></i><br>
+                            No users currently have access (besides yourself).
+                        </div>
+                    {% endif %}
+                    <hr>
+                    <h6>Grant New Access:</h6>
+                     <form action="{{ url_for('grant_field_access', patient_id_url=patient._id) }}" method="POST">
+                         <div class="input-group mb-3">
+                             <span class="input-group-text"><i class="fas fa-user-plus"></i></span>
+                             <input list="provider-suggestions" type="text" class="form-control" name="address" placeholder="Enter or Select Doctor/Hospital MetaMask Address" required>
+                             <datalist id="provider-suggestions">
+                                {% for suggestion in provider_suggestions %}
+                                    <option value="{{ suggestion.value }}">{{ suggestion.label }}</option>
+                                {% endfor %}
+                            </datalist>
+                         </div>
+                         <div class="row mb-3">
+                              <div class="col-md-6">
+                                 <label for="duration" class="form-label">Duration (days)</label>
+                                 <input type="number" class="form-control" name="duration" value="30" required> 
+                              </div>
+                              <div class="col-md-6">
+                                  <label class="form-label">Fields to Allow</label>
+                                  <select class="form-select" name="fields" multiple required size="3">
+                                     <option value="personal_info">Personal Info</option>
+                                     <option value="medical_records">Medical Records</option>
+                                     <option value="examinations">Examinations</option>
+                                     <!-- Add more granular fields if contract supports -->
+                                 </select>
+                              </div>
+                         </div>
+                         <button type="submit" class="btn btn-primary w-100"><i class="fas fa-check-circle me-1"></i>Grant Access</button>
+                     </form>
+                     #}
+                     {# Keep this note #}
+                     <p class="mt-3 text-muted small">Note: Record-specific sharing is handled via the 'Share' button on each record in the table above. The access grant form below might be removed or repurposed later.</p>
+                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chatbot Integration -->
+<div class="chatbot-container">
+    <div id="header">
+        <h1>HealthMate AI</h1>
+    </div>
+    <div id="conversation">
+        <div class="chatbot-message chatbot">
+            <p>Hi! I'm your AI assistant 👋 How can I help?</p>
+        </div>
+    </div>
+    <form id="input-form">
+        <input id="input-field" type="text" placeholder="Type your message...">
+        <button id="submit-button" type="submit">Send</button>
+    </form>
+</div>
+
+<script>
+function copyToClipboard(elementId) {
+    var copyText = document.getElementById(elementId);
+    copyText.select();
+    copyText.setSelectionRange(0, 99999); /* For mobile devices */
+    navigator.clipboard.writeText(copyText.value).then(function() {
+        /* Optional: Indicate success */
+        alert("Address copied to clipboard!"); 
+    }, function(err) {
+        /* Optional: Indicate failure */
+        alert("Failed to copy address.");
+    });
+}
+
+const GEMINI_API_KEY = "AIzaSyC8KBJ6ooV-2k1h_pvqFr2W13hsTL7DWvo"; // Your actual API key
+const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
+
+function displayMessage(message, sender) {
+    let conversation = document.getElementById("conversation");
+    let msgDiv = document.createElement("div");
+    msgDiv.classList.add("chatbot-message", sender === "user" ? "user-message" : "chatbot");
+    msgDiv.innerHTML = `<p>${message}</p>`;
+    conversation.appendChild(msgDiv);
+    conversation.scrollTop = conversation.scrollHeight;
+}
+
+document.getElementById("input-form").addEventListener("submit", function(event) {
+    event.preventDefault();
+    sendMessage();
+});
+
+function sendMessage() {
+    let userInput = document.getElementById("input-field").value.trim();
+    if (!userInput) return;
+
+    displayMessage(userInput, "user");
+    document.getElementById("input-field").value = "";
+
+    fetch(API_URL, {
+        method: "POST",
+        headers: { 
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            contents: [{
+                parts: [{
+                    text: userInput
+                }]
+            }],
+            generationConfig: {
+                temperature: 0.9,
+                topK: 1,
+                topP: 1
+            }
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => {
+                console.error('API Error:', err);
+                throw new Error(err.error?.message || 'API request failed');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        let botReply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "I couldn't understand that. Could you rephrase?";
+        displayMessage(botReply, "bot");
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        displayMessage("I'm having trouble connecting. Please try again later.", "bot");
+    });
+}
+</script>
+{% endblock %} 

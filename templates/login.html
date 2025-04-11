@@ -1,148 +1,78 @@
-<!-- templates/login.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Bluetooth Auth System</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .container {
-            background-color: #f9f9f9;
-            border-radius: 5px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input[type="text"], input[type="password"] {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .error {
-            color: red;
-            margin-bottom: 15px;
-        }
-        .bluetooth-section {
-            margin-top: 20px;
-            text-align: center;
-            padding-top: 15px;
-            border-top: 1px solid #ddd;
-        }
-        #status {
-            margin-top: 10px;
-            font-style: italic;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Login</h1>
-        
-        {% if error %}
-        <p class="error">{{ error }}</p>
-        {% endif %}
-        
-        <form method="POST">
-            <div class="form-group">
-                <label for="username">Username:</label>
-                <input type="text" id="username" name="username" required>
+<!-- login.html -->
+{% extends "base.html" %}
+
+{% block title %}Login - HealthChain{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-user-lock me-2"></i>Login to HealthChain</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Patient Block -->
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-user-injured fa-3x text-primary mb-3"></i>
+                                    <h5 class="card-title">Patient Login</h5>
+                                    <p class="card-text">Access your medical records and manage your health data</p>
+                                    <a href="{{ url_for('patient_login') }}" class="btn btn-primary">
+                                        <i class="fas fa-sign-in-alt me-2"></i>Login as Patient
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Doctor Block -->
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-user-md fa-3x text-success mb-3"></i>
+                                    <h5 class="card-title text-success">Doctor Login</h5>
+                                    <p class="card-text">Access patient records and provide medical care</p>
+                                    <a href="{{ url_for('doctor_login') }}" class="btn btn-success">
+                                        <i class="fas fa-sign-in-alt me-2"></i>Login as Doctor
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hospital Block -->
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-hospital fa-3x text-info mb-3"></i>
+                                    <h5 class="card-title">Hospital Login</h5>
+                                    <p class="card-text">Manage hospital operations and patient care</p>
+                                    <a href="{{ url_for('hospital_login') }}" class="btn btn-info">
+                                        <i class="fas fa-sign-in-alt me-2"></i>Login as Hospital
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <p class="mb-2">Don't have an account? Register as:</p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <a href="{{ url_for('register_patient') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-user-plus me-2"></i>Patient
+                            </a>
+                            <a href="{{ url_for('register_doctor') }}" class="btn btn-outline-success">
+                                <i class="fas fa-user-md me-2"></i>Doctor
+                            </a>
+                            <a href="{{ url_for('register_hospital') }}" class="btn btn-outline-info">
+                                <i class="fas fa-hospital me-2"></i>Hospital
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <div class="form-group">
-                <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            
-            <button type="submit">Login</button>
-        </form>
-        
-        <div class="bluetooth-section">
-            <h3>Bluetooth Login</h3>
-            <p>Bring your phone near to log in automatically</p>
-            <button id="scan-btn">Scan for Devices</button>
-            <p id="status">Not scanning</p>
         </div>
     </div>
-
-    <script>
-        document.getElementById('scan-btn').addEventListener('click', function() {
-            const statusElement = document.getElementById('status');
-            statusElement.textContent = "Scanning for devices...";
-            
-            // Check if Web Bluetooth API is available
-            if (!navigator.bluetooth) {
-                statusElement.textContent = "Bluetooth not available on this browser";
-                return;
-            }
-            
-            navigator.bluetooth.requestDevice({
-                // Filter for devices that advertise services
-                acceptAllDevices: true
-            })
-            .then(device => {
-                statusElement.textContent = `Found device: ${device.name}`;
-                
-                // Get the device ID (MAC address in our case)
-                const deviceId = device.id || 'AA:BB:CC:DD:EE:FF'; // For testing purposes
-                
-                // Send the device ID to the server
-                return fetch('/api/bluetooth-auth', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        device_id: deviceId
-                    }),
-                });
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    statusElement.textContent = `Authentication successful. Redirecting...`;
-                    setTimeout(() => {
-                        window.location.href = '/dashboard';
-                    }, 1000);
-                } else {
-                    statusElement.textContent = data.message || 'Authentication failed';
-                }
-            })
-            .catch(error => {
-                statusElement.textContent = `Error: ${error}`;
-                console.error('Bluetooth error:', error);
-            });
-        });
-    </script>
-</body>
-</html>
+</div>
+{% endblock %}

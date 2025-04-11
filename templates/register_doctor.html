@@ -1,0 +1,149 @@
+<!-- register_doctor.html -->
+{% extends "base.html" %}
+
+{% block title %}Register Doctor - HealthChain{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0"><i class="fas fa-user-md me-2"></i>Doctor Registration</h3>
+                </div>
+                <div class="card-body p-4">
+                    {% if session.user_type == 'hospital' %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        You are registering a new doctor for your hospital.
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success">
+                        <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>About Doctor Registration</h5>
+                        <p>Register as a doctor to access patient records and provide medical care. You will need:</p>
+                        <ul>
+                            <li>A valid medical license</li>
+                            <li>Your specialization(s)</li>
+                            <li>A MetaMask wallet for blockchain interactions</li>
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <form method="POST" action="{{ url_for('register_doctor') }}">
+                        <div class="mb-3 form-floating">
+                            <input type="text" class="form-control" id="name" name="name" placeholder="Doctor's Name" required>
+                            <label for="name"><i class="fas fa-signature me-1"></i> Full Name</label>
+                        </div>
+                        
+                        <div class="mb-3 form-floating">
+                            <input type="email" class="form-control" id="email" name="email" placeholder="Email Address" required>
+                            <label for="email"><i class="fas fa-at me-1"></i> Email Address</label>
+                        </div>
+                        
+                        <div class="mb-3 form-floating">
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Set Password" required>
+                            <label for="password"><i class="fas fa-key me-1"></i> Password</label>
+                            <small class="form-text text-muted">Choose a strong password with at least 8 characters.</small>
+                        </div>
+                        
+                        <!-- Specializations Section -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Specialization(s):</label>
+                            <div class="border p-3 rounded bg-light mb-2">
+                                <div class="row">
+                                    {% for spec in specializations %}
+                                        {% if spec != 'Other' %}
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="{{ spec }}" id="spec_{{ loop.index }}" name="specialization_cb">
+                                                <label class="form-check-label" for="spec_{{ loop.index }}">
+                                                    {{ spec }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <hr class="my-2">
+                                <label for="other_specialization" class="form-label small">Other Specialization(s):</label>
+                                <input type="text" class="form-control form-control-sm" id="other_specialization" name="other_specialization" placeholder="Enter custom specializations, separated by commas">
+                                <small class="form-text text-muted">If not listed, enter here. Separate multiple with a comma (,).</small>
+                            </div>
+                            <small class="form-text text-danger d-none" id="specialization-error">Please select at least one specialization or enter one in 'Other'.</small>
+                        </div>
+                        
+                        <div class="mb-4 form-floating">
+                            <input type="text" class="form-control" id="metamask_address" name="metamask_address" placeholder="Wallet Address (0x...)" required>
+                            <label for="metamask_address"><i class="fas fa-wallet me-1"></i> MetaMask Wallet Address</label>
+                            <small class="form-text text-muted">Your Ethereum address for blockchain interactions. Must start with '0x'.</small>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-user-plus me-2"></i>Register as Doctor
+                            </button>
+                            {% if not session.user_type == 'hospital' %}
+                            <a href="{{ url_for('doctor_login') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Login
+                            </a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Check if MetaMask is installed
+    window.addEventListener('load', function() {
+        const metamaskAddressInput = document.getElementById('metamask_address');
+        if (!metamaskAddressInput) return;
+        
+        if (typeof window.ethereum !== 'undefined') {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn btn-outline-primary btn-sm mt-2';
+            button.innerHTML = '<i class="fas fa-wallet me-1"></i>Connect MetaMask';
+            button.onclick = async function() {
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    metamaskAddressInput.value = accounts[0];
+                } catch (error) {
+                    console.error('Error connecting to MetaMask:', error);
+                }
+            };
+            metamaskAddressInput.parentNode.appendChild(button);
+        }
+    });
+
+    // Basic validation to ensure at least one specialization is selected or entered
+    const form = document.querySelector('form');
+    const checkboxes = document.querySelectorAll('input[name="specialization_cb"]');
+    const otherInput = document.getElementById('other_specialization');
+    const errorMsg = document.getElementById('specialization-error');
+
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            let isChecked = false;
+            checkboxes.forEach(cb => {
+                if (cb.checked) {
+                    isChecked = true;
+                }
+            });
+            
+            const otherValue = otherInput ? otherInput.value.trim() : '';
+            
+            if (!isChecked && otherValue === '' && errorMsg) {
+                errorMsg.classList.remove('d-none');
+                event.preventDefault();
+            } else if (errorMsg) {
+                errorMsg.classList.add('d-none');
+            }
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Register Hospital{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h3 class="mb-0"><i class="fas fa-hospital-alt me-2"></i>Register New Hospital</h3>
+            </div>
+            <div class="card-body p-4">
+                 <p class="card-text text-muted mb-4">Register your hospital to manage doctors and participate in the network.</p>
+                <form method="POST" action="{{ url_for('register_hospital') }}">
+                    <div class="mb-3 form-floating">
+                         <input type="text" class="form-control" id="name" name="name" placeholder="Hospital Name" required>
+                         <label for="name"><i class="fas fa-signature me-1"></i> Hospital Name</label>
+                    </div>
+                    <div class="mb-3 form-floating">
+                         <input type="email" class="form-control" id="email" name="email" placeholder="Hospital Email" required>
+                         <label for="email"><i class="fas fa-at me-1"></i> Email Address</label>
+                    </div>
+                    <div class="mb-3 form-floating">
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                         <label for="password"><i class="fas fa-key me-1"></i> Password</label>
+                    </div>
+                    <div class="mb-3 form-floating">
+                        <input type="text" class="form-control" id="address" name="address" placeholder="Hospital Address" required>
+                         <label for="address"><i class="fas fa-location-dot me-1"></i> Address</label>
+                    </div>
+                    <div class="mb-3 form-floating">
+                        <input type="tel" class="form-control" id="phone" name="phone" placeholder="Phone Number" required>
+                         <label for="phone"><i class="fas fa-phone me-1"></i> Phone Number</label>
+                    </div>
+                     <div class="mb-4 form-floating">
+                         <input type="text" class="form-control" id="metamask_address" name="metamask_address" placeholder="Wallet Address (0x...)" required>
+                        <label for="metamask_address"><i class="fas fa-wallet me-1"></i> MetaMask Wallet Address</label>
+                        <small class="form-text text-muted">The hospital's primary Ethereum address for blockchain interactions.</small>
+                        {# Connect button added via JS #}
+                    </div>
+                    <div class="d-grid">
+                         <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-plus-circle me-2"></i>Register Hospital</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+ <script>
+    // Check if MetaMask is installed and add connect button
+    window.addEventListener('load', function() {
+        const metamaskAddressInput = document.getElementById('metamask_address');
+        if (!metamaskAddressInput) return; 
+        const parentDiv = metamaskAddressInput.parentNode;
+
+        if (typeof window.ethereum !== 'undefined') {
+            console.log('MetaMask is installed!');
+            const metamaskBtn = document.createElement('button');
+            metamaskBtn.type = 'button';
+            metamaskBtn.className = 'btn btn-sm btn-outline-secondary mt-2';
+            metamaskBtn.innerHTML = '<i class="fab fa-ethereum me-1"></i> Connect MetaMask';
+            
+            if (parentDiv && parentDiv.classList.contains('form-floating')) {
+                parentDiv.parentNode.insertBefore(metamaskBtn, parentDiv.nextSibling);
+            } else if (parentDiv) {
+                parentDiv.appendChild(metamaskBtn);
+            }
+            
+            metamaskBtn.addEventListener('click', function(event) {
+                event.preventDefault();
+                connectMetaMask();
+            });
+        } else {
+            console.log('MetaMask is not installed!');
+            const infoText = document.createElement('small');
+            infoText.className = 'd-block text-danger mt-1';
+            infoText.textContent = 'MetaMask extension is required for wallet connection.';
+             if (parentDiv && parentDiv.classList.contains('form-floating')) {
+                 parentDiv.parentNode.insertBefore(infoText, parentDiv.nextSibling);
+             } else if (parentDiv) {
+                 parentDiv.appendChild(infoText);
+             }
+        }
+    });
+    
+    async function connectMetaMask() {
+        const metamaskAddressInput = document.getElementById('metamask_address');
+        if (!metamaskAddressInput) return;
+        try {
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            const account = accounts[0];
+            metamaskAddressInput.value = account;
+            console.log('Connected account:', account);
+            metamaskAddressInput.dispatchEvent(new Event('input'));
+            metamaskAddressInput.dispatchEvent(new Event('change'));
+        } catch (error) {
+            console.error('Error connecting to MetaMask:', error);
+            alert(`Error connecting wallet: ${error.message || 'Unknown error'}`); 
+        }
+    }
+</script>
+{% endblock %}
