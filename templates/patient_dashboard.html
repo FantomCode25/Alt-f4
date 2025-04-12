@@ -1,25 +1,497 @@
 {% extends "base.html" %}
 
-{% block title %}Patient Dashboard{% endblock %}
+{% block title %}Patient Dashboard - HealthChain{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-info text-white">
-                    <h4><i class="bi bi-person"></i> Patient Dashboard</h4>
-                </div>
-                <div class="card-body">
-                    <h5>Welcome, {{ session.name }}!</h5>
-                    <p>You are logged in as a patient.</p>
-                    
-                    <div class="alert alert-success mt-4">
-                        <i class="bi bi-check-circle"></i> Your registration is complete. Your doctor will be able to access your medical information in our secure system.
-                    </div>
-                </div>
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-sm-flex align-items-center justify-content-between">
+            <h2 class="mb-sm-0"><i class="fas fa-user-circle text-primary me-2"></i>Welcome, {{ patient.name }}!</h2>
+            <div class="d-flex align-items-center mt-2 mt-sm-0">
+                <span id="metamask-status" class="metamask-status disconnected me-3">
+                    <i class="fas fa-wallet me-1"></i> MetaMask: Not Connected
+                </span>
+                <button id="connect-wallet" class="btn btn-outline-primary btn-sm">
+                    <i class="fab fa-ethereum me-1"></i> Connect Wallet
+                </button>
             </div>
         </div>
     </div>
 </div>
+
+    <div class="row">
+        <!-- Column 1: Patient Info & Actions -->
+    <div class="col-lg-4 mb-4">
+            <!-- Patient Details Card -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-id-card me-2"></i>Your Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                        <i class="fas fa-user fa-2x text-primary"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0">{{ patient.name }}</h5>
+                        <p class="mb-0 text-secondary">{{ patient.email }}</p>
+                    </div>
+                </div>
+                <hr>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item px-0 py-2 d-flex justify-content-between border-0">
+                        <span class="text-secondary"><i class="fas fa-calendar-alt me-2"></i>Date of Birth:</span>
+                        <span class="fw-medium">{{ patient.date_of_birth }}</span>
+                    </li>
+                    <li class="list-group-item px-0 py-2 d-flex justify-content-between border-0">
+                        <span class="text-secondary"><i class="fas fa-tint me-2"></i>Blood Group:</span>
+                        <span class="fw-medium">{{ patient.blood_group }}</span>
+                    </li>
+                    <li class="list-group-item px-0 py-2 d-flex justify-content-between border-0">
+                        <span class="text-secondary"><i class="fas fa-phone me-2"></i>Phone:</span>
+                        <span class="fw-medium">{{ patient.phone }}</span>
+                    </li>
+                </ul>
+                
+                <div class="alert alert-success bg-success bg-opacity-10 border-0 mt-3">
+                    <div class="d-flex">
+                        <div class="me-3">
+                            <i class="fas fa-shield-alt text-success"></i>
+                        </div>
+                        <small>Your data is encrypted and secure on the blockchain.</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                <div class="d-grid">
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#setupEmergencyPin">
+                        <i class="fas fa-ambulance me-2"></i>Setup Emergency Access
+                    </button>
+                 </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Card -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('upload_medical_file') }}" class="list-group-item list-group-item-action p-3">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
+                                <i class="fas fa-file-upload text-primary"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Upload Medical Record</h6>
+                                <small class="text-muted">Add a new document to your records</small>
+                            </div>
+                        </div>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action p-3" data-bs-toggle="modal" data-bs-target="#addMedicalRecord">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-secondary bg-opacity-10 p-2 me-3">
+                                <i class="fas fa-notes-medical text-secondary"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Add Medical Condition</h6>
+                                <small class="text-muted">Record a new medical condition</small>
+                            </div>
+                        </div>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action p-3" data-bs-toggle="modal" data-bs-target="#manageAccess">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle" style="background-color: rgba(255,90,95,0.1); padding: 0.5rem; margin-right: 0.75rem;">
+                                <i class="fas fa-user-shield" style="color: var(--accent);"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Manage Access</h6>
+                                <small class="text-muted">Control who can access your records</small>
+                            </div>
+                        </div>
+                    </a>
+                 </div>
+            </div>
+        </div>
+        </div>
+
+    <!-- Column 2: Medical Records -->
+        <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-file-medical me-2"></i>Your Medical Records</h5>
+                <div>
+                    <a href="{{ url_for('medical_image_gallery') }}" class="btn btn-sm btn-light me-2">
+                        <i class="fas fa-images me-1"></i>Image Gallery
+                    </a>
+                    <a href="{{ url_for('upload_medical_file') }}" class="btn btn-sm btn-light">
+                        <i class="fas fa-plus me-1"></i>Add
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if medical_records %}
+                        <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                            {% for record in medical_records %}
+                            <tr>
+                                <td>
+                                    {% if record.file_type and record.file_type.startswith('lab_result') %}
+                                        <span class="badge bg-info"><i class="fas fa-flask me-1"></i> Lab Result</span>
+                                    {% elif record.file_type and record.file_type.startswith('imaging') %}
+                                        <span class="badge bg-primary"><i class="fas fa-x-ray me-1"></i> Imaging</span>
+                                    {% elif record.file_type == 'prescription' %}
+                                        <span class="badge bg-success"><i class="fas fa-prescription me-1"></i> Prescription</span>
+                                    {% elif record.file_type == 'medical_report' %}
+                                        <span class="badge bg-secondary"><i class="fas fa-file-medical me-1"></i> Report</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary"><i class="fas fa-file me-1"></i> Document</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ record.description | truncate(30) }}</td>
+                                <td>{{ record.date }}</td>
+                                <td>
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-shield-alt me-1"></i> Verified
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{{ url_for('view_medical_file', file_id=record._id) }}" class="btn btn-sm btn-outline-primary" title="View File">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary share-file-btn" 
+                                                data-bs-toggle="modal" data-bs-target="#shareFileModal" 
+                                                data-file-id="{{ record._id }}"
+                                                title="Share File">
+                                            <i class="fas fa-share-alt"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                                                    </div>
+                {% else %}
+                <div class="text-center py-5">
+                                                        <div class="mb-3">
+                        <i class="fas fa-folder-open fa-3x text-secondary opacity-50"></i>
+                    </div>
+                    <h5>No Medical Records Yet</h5>
+                    <p class="text-muted">Upload your first medical record to get started</p>
+                    <a href="{{ url_for('upload_medical_file') }}" class="btn btn-primary">
+                        <i class="fas fa-upload me-2"></i>Upload Medical Record
+                    </a>
+                </div>
+                                                                {% endif %}
+                                                        </div>
+                                                    </div>
+        
+        <!-- Authorized Doctors Section -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-user-md me-2"></i>Authorized Healthcare Providers</h5>
+                                                    </div>
+            <div class="card-body">
+                {% if authorized_doctors %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Specialization</th>
+                                <th>Access Until</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doctor in authorized_doctors %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-secondary bg-opacity-10 p-2 me-2">
+                                            <i class="fas fa-user-md text-secondary"></i>
+                                        </div>
+                                        <span>Dr. {{ doctor.name }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ doctor.specialization }}</td>
+                                <td>{{ doctor.access_until or 'Indefinite' }}</td>
+                                <td>
+                                    <span class="badge bg-success">Active</span>
+                                </td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('revoke_access', patient_id=patient._id) }}" class="d-inline">
+                                        <input type="hidden" name="doctor_id" value="{{ doctor._id }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-user-times me-1"></i> Revoke
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                <div class="text-center py-4">
+                    <div class="mb-3">
+                        <i class="fas fa-user-md fa-3x text-secondary opacity-50"></i>
+                    </div>
+                    <h5>No Authorized Providers</h5>
+                    <p class="text-muted">You haven't authorized any healthcare providers yet</p>
+                    <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#manageAccess">
+                        <i class="fas fa-plus me-2"></i>Add Provider
+                    </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+    </div>
+                 </div>
+
+<!-- Modals -->
+<!-- Add Medical Record Modal -->
+<div class="modal fade" id="addMedicalRecord" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-notes-medical me-2"></i>Add Medical Record</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('add_medical_record', patient_id=patient._id) }}">
+                    <div class="mb-3">
+                        <label for="condition" class="form-label">Medical Condition</label>
+                        <input type="text" class="form-control" id="condition" name="condition" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="medication" class="form-label">Medication</label>
+                        <input type="text" class="form-control" id="medication" name="medication" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="allergies" class="form-label">Allergies</label>
+                        <input type="text" class="form-control" id="allergies" name="allergies" placeholder="Comma-separated list of allergies">
+                        </div>
+                                <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                                </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Medical Record
+                                </button>
+                    </div>
+                            </form>
+            </div>
+        </div>
+                        </div>
+                    </div>
+                    
+<!-- Setup Emergency PIN Modal -->
+<div class="modal fade" id="setupEmergencyPin" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: var(--accent); color: white;">
+                <h5 class="modal-title"><i class="fas fa-ambulance me-2"></i>Setup Emergency Access</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+            <div class="modal-body">
+                <div class="alert alert-warning bg-warning bg-opacity-10 border-0">
+                    <div class="d-flex">
+                        <div class="me-3">
+                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                        </div>
+                        <div>
+                            <strong>Important:</strong> This PIN will provide emergency access to critical medical information. Share it only with trusted individuals or keep it in your emergency contacts.
+                              </div>
+                              </div>
+                         </div>
+                <form method="POST" action="{{ url_for('setup_emergency_pin') }}">
+                    <div class="mb-3">
+                        <label for="emergency_pin" class="form-label">Create Emergency PIN</label>
+                        <input type="password" class="form-control" id="emergency_pin" name="emergency_pin" placeholder="4-6 digit PIN" required pattern="[0-9]{4,6}">
+                        <div class="form-text">Choose a 4-6 digit PIN that's easy to remember in emergencies.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_pin" class="form-label">Confirm PIN</label>
+                        <input type="password" class="form-control" id="confirm_pin" placeholder="Confirm 4-6 digit PIN" required pattern="[0-9]{4,6}">
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn" style="background-color: var(--accent); color: white;">
+                            <i class="fas fa-save me-2"></i>Save Emergency PIN
+                        </button>
+                    </div>
+                     </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manage Access Modal -->
+<div class="modal fade" id="manageAccess" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title"><i class="fas fa-user-shield me-2"></i>Manage Healthcare Access</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('grant_access', patient_id=patient._id) }}">
+                    <div class="mb-3">
+                        <label for="doctor_id" class="form-label">Select Healthcare Provider</label>
+                        <select class="form-select" id="doctor_id" name="doctor_id" required>
+                            <option value="" selected disabled>-- Select Doctor --</option>
+                            {% for doctor in available_doctors %}
+                                <option value="{{ doctor._id }}">Dr. {{ doctor.name }} ({{ doctor.specialization }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="access_duration" class="form-label">Access Duration</label>
+                        <select class="form-select" id="access_duration" name="access_duration">
+                            <option value="7">7 days</option>
+                            <option value="30">30 days</option>
+                            <option value="90">3 months</option>
+                            <option value="180">6 months</option>
+                            <option value="365">1 year</option>
+                            <option value="0">Indefinite (until revoked)</option>
+                        </select>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="allow_all_records" name="allow_all_records" value="1" checked>
+                        <label class="form-check-label" for="allow_all_records">
+                            Allow access to all medical records
+                        </label>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-secondary">
+                            <i class="fas fa-user-plus me-2"></i>Grant Access
+                        </button>
+                    </div>
+                </form>
+    </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add a modal for sharing files -->
+<div class="modal fade" id="shareFileModal" tabindex="-1" aria-labelledby="shareFileModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="shareFileModalLabel"><i class="fas fa-share-alt me-2"></i>Share Medical Record</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="shareFileForm" method="POST">
+                    <input type="hidden" id="fileIdToShare" name="file_id">
+                    
+                    <div class="mb-3">
+                        <label for="shareWithDoctor" class="form-label">Share with Doctor:</label>
+                        <select class="form-select" id="shareWithDoctor" name="share_with_id">
+                            <option value="" selected disabled>-- Select Doctor --</option>
+                            {% for doctor in authorized_doctors %}
+                            <option value="doc_{{ doctor._id }}">Dr. {{ doctor.name }} 
+                                {% if doctor.specialization %}
+                                ({{ doctor.specialization }})
+                                {% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="shareUntilDate" class="form-label">Share until:</label>
+                        <input type="date" class="form-control" id="shareUntilDate" name="share_until" 
+                               min="{{ now.strftime('%Y-%m-%d') }}" 
+                               value="{{ (now + timedelta(days=30)).strftime('%Y-%m-%d') }}" required>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-share-alt me-2"></i>Share Record
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+// Connect to MetaMask
+document.getElementById('connect-wallet').addEventListener('click', async function() {
+    if (typeof window.ethereum !== 'undefined') {
+        try {
+            // Request account access
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            const account = accounts[0];
+            
+            // Update UI
+            document.getElementById('metamask-status').classList.remove('disconnected');
+            document.getElementById('metamask-status').classList.add('connected');
+            document.getElementById('metamask-status').innerHTML = `<i class="fas fa-wallet me-1"></i> Connected: ${account.substring(0, 6)}...${account.substring(38)}`;
+            
+            // Optional: Save connection to server
+            // Add AJAX call here if needed
+            
+        } catch (error) {
+            console.error(error);
+            alert('Error connecting to MetaMask. Please make sure it is installed and unlocked.');
+        }
+    } else {
+        alert('MetaMask is not installed. Please install it to use blockchain features.');
+        window.open('https://metamask.io', '_blank');
+    }
+});
+
+// Validate matching PINs
+document.getElementById('confirm_pin')?.addEventListener('input', function() {
+    const pin = document.getElementById('emergency_pin').value;
+    const confirmPin = this.value;
+    
+    if (pin && confirmPin && pin !== confirmPin) {
+        this.setCustomValidity('PINs do not match');
+    } else {
+        this.setCustomValidity('');
+    }
+});
+
+// Script to handle sharing files
+document.addEventListener('DOMContentLoaded', function() {
+    // Get all share buttons
+    const shareButtons = document.querySelectorAll('.share-file-btn');
+    
+    // Add click event to each button
+    shareButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Get file ID from button's data attribute
+            const fileId = this.getAttribute('data-file-id');
+            
+            // Set the file ID in the hidden form field
+            document.getElementById('fileIdToShare').value = fileId;
+            
+            // Update the form action URL
+            const shareForm = document.getElementById('shareFileForm');
+            shareForm.action = `/share_medical_file/${fileId}`;
+        });
+    });
+});
+</script>
+{% endblock %}
 {% endblock %} 

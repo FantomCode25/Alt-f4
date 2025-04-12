@@ -1,127 +1,105 @@
+{% extends "base.html" %}
 
-<!-- register_hospital.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register Hospital - Blockchain Healthcare System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('index') }}">Blockchain Healthcare</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('login') }}">Login</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('register_hospital') }}">Register Hospital</a>
-                    </li>
-                </ul>
+{% block title %}Register Hospital{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h3 class="mb-0"><i class="fas fa-hospital-alt me-2"></i>Register New Hospital</h3>
             </div>
-        </div>
-    </nav>
-
-    <div class="container mt-4">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <div class="card-body p-4">
+                 <p class="card-text text-muted mb-4">Register your hospital to manage doctors and participate in the network.</p>
+                <form method="POST" action="{{ url_for('register_hospital') }}">
+                    <div class="mb-3 form-floating">
+                         <input type="text" class="form-control" id="name" name="name" placeholder="Hospital Name" required>
+                         <label for="name"><i class="fas fa-signature me-1"></i> Hospital Name</label>
                     </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0">Register Hospital</h4>
+                    <div class="mb-3 form-floating">
+                         <input type="email" class="form-control" id="email" name="email" placeholder="Hospital Email" required>
+                         <label for="email"><i class="fas fa-at me-1"></i> Email Address</label>
                     </div>
-                    <div class="card-body">
-                        <form method="POST" action="{{ url_for('register_hospital') }}">
-                            <div class="mb-3">
-                                <label for="name" class="form-label">Hospital Name</label>
-                                <input type="text" class="form-control" id="name" name="name" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" name="email" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="password" name="password" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="address" class="form-label">Address</label>
-                                <textarea class="form-control" id="address" name="address" rows="2" required></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label for="phone" class="form-label">Phone</label>
-                                <input type="text" class="form-control" id="phone" name="phone" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="metamask_address" class="form-label">MetaMask Wallet Address</label>
-                                <input type="text" class="form-control" id="metamask_address" name="metamask_address" required>
-                                <small class="form-text text-muted">Connect MetaMask and copy your wallet address</small>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Register Hospital</button>
-                        </form>
+                    <div class="mb-3 form-floating">
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                         <label for="password"><i class="fas fa-key me-1"></i> Password</label>
                     </div>
-                    <div class="card-footer text-center">
-                        <p class="mb-0">Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+                    <div class="mb-3 form-floating">
+                        <input type="text" class="form-control" id="address" name="address" placeholder="Hospital Address" required>
+                         <label for="address"><i class="fas fa-location-dot me-1"></i> Address</label>
                     </div>
-                </div>
+                    <div class="mb-3 form-floating">
+                        <input type="tel" class="form-control" id="phone" name="phone" placeholder="Phone Number" required>
+                         <label for="phone"><i class="fas fa-phone me-1"></i> Phone Number</label>
+                    </div>
+                     <div class="mb-4 form-floating">
+                         <input type="text" class="form-control" id="metamask_address" name="metamask_address" placeholder="Wallet Address (0x...)" required>
+                        <label for="metamask_address"><i class="fas fa-wallet me-1"></i> MetaMask Wallet Address</label>
+                        <small class="form-text text-muted">The hospital's primary Ethereum address for blockchain interactions.</small>
+                        {# Connect button added via JS #}
+                    </div>
+                    <div class="d-grid">
+                         <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-plus-circle me-2"></i>Register Hospital</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+</div>
+{% endblock %}
 
-    <footer class="bg-light text-center py-3 mt-5">
-        <p>© 2025 Blockchain Healthcare System</p>
-    </footer>
+{% block scripts %}
+ <script>
+    // Check if MetaMask is installed and add connect button
+    window.addEventListener('load', function() {
+        const metamaskAddressInput = document.getElementById('metamask_address');
+        if (!metamaskAddressInput) return; 
+        const parentDiv = metamaskAddressInput.parentNode;
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Check if MetaMask is installed
-        window.addEventListener('load', function() {
-            if (typeof window.ethereum !== 'undefined') {
-                console.log('MetaMask is installed!');
-                
-                // Add a button to connect to MetaMask
-                const metamaskBtn = document.createElement('button');
-                metamaskBtn.className = 'btn btn-secondary mt-2';
-                metamaskBtn.textContent =metamaskBtn.textContent = 'Connect MetaMask';
-                document.getElementById('metamask_address').parentNode.appendChild(metamaskBtn);
-                
-                metamaskBtn.addEventListener('click', function(event) {
-                    event.preventDefault();
-                    connectMetaMask();
-                });
-            } else {
-                console.log('MetaMask is not installed!');
-                alert('Please install MetaMask to use blockchain features!');
+        if (typeof window.ethereum !== 'undefined') {
+            console.log('MetaMask is installed!');
+            const metamaskBtn = document.createElement('button');
+            metamaskBtn.type = 'button';
+            metamaskBtn.className = 'btn btn-sm btn-outline-secondary mt-2';
+            metamaskBtn.innerHTML = '<i class="fab fa-ethereum me-1"></i> Connect MetaMask';
+            
+            if (parentDiv && parentDiv.classList.contains('form-floating')) {
+                parentDiv.parentNode.insertBefore(metamaskBtn, parentDiv.nextSibling);
+            } else if (parentDiv) {
+                parentDiv.appendChild(metamaskBtn);
             }
-        });
-        
-        async function connectMetaMask() {
-            try {
-                // Request account access
-                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-                const account = accounts[0];
-                document.getElementById('metamask_address').value = account;
-                console.log('Connected account:', account);
-            } catch (error) {
-                console.error('Error connecting to MetaMask:', error);
-            }
+            
+            metamaskBtn.addEventListener('click', function(event) {
+                event.preventDefault();
+                connectMetaMask();
+            });
+        } else {
+            console.log('MetaMask is not installed!');
+            const infoText = document.createElement('small');
+            infoText.className = 'd-block text-danger mt-1';
+            infoText.textContent = 'MetaMask extension is required for wallet connection.';
+             if (parentDiv && parentDiv.classList.contains('form-floating')) {
+                 parentDiv.parentNode.insertBefore(infoText, parentDiv.nextSibling);
+             } else if (parentDiv) {
+                 parentDiv.appendChild(infoText);
+             }
         }
-    </script>
-</body>
-</html>
+    });
+    
+    async function connectMetaMask() {
+        const metamaskAddressInput = document.getElementById('metamask_address');
+        if (!metamaskAddressInput) return;
+        try {
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            const account = accounts[0];
+            metamaskAddressInput.value = account;
+            console.log('Connected account:', account);
+            metamaskAddressInput.dispatchEvent(new Event('input'));
+            metamaskAddressInput.dispatchEvent(new Event('change'));
+        } catch (error) {
+            console.error('Error connecting to MetaMask:', error);
+            alert(`Error connecting wallet: ${error.message || 'Unknown error'}`); 
+        }
+    }
+</script>
+{% endblock %}

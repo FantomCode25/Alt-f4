@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Add Examination - HealthChain{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-stethoscope me-2"></i>Add Medical Examination</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('add_examination', patient_id=patient._id) }}">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            You are adding an examination record for <strong>{{ patient.name }}</strong>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="symptoms" class="form-label">Symptoms</label>
+                            <textarea class="form-control" id="symptoms" name="symptoms" rows="3" required></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="diagnosis" class="form-label">Diagnosis</label>
+                            <input type="text" class="form-control" id="diagnosis" name="diagnosis" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="treatment" class="form-label">Treatment Plan</label>
+                            <textarea class="form-control" id="treatment" name="treatment" rows="3" required></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Additional Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="alert alert-secondary">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            <strong>Blockchain Record:</strong> This examination will be recorded on the blockchain
+                            for verifiable integrity. A permanent record will be created with your doctor ID linked.
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-2"></i>Save Examination
+                            </button>
+                            <a href="{{ url_for('patient_details', patient_id=patient._id) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Patient Details
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

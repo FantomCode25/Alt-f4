@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Medical Image Gallery - HealthChain{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="fas fa-images me-2"></i>Medical Image Gallery</h4>
+                    <div>
+                        <a href="{{ url_for('patient_dashboard') }}" class="btn btn-light btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if files %}
+                        <div class="mb-4">
+                            <p class="text-muted">
+                                Click on an image to view in full-screen mode with zoom and rotation controls.
+                            </p>
+                        </div>
+                        
+                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                            {% for file in files %}
+                                <div class="col">
+                                    <div class="card h-100 border-0 shadow-sm hover-shadow">
+                                        <div class="card-img-container" style="height: 200px; overflow: hidden; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                                            <a href="{{ url_for('view_image', file_id=file._id) }}" class="text-decoration-none">
+                                                <img src="{{ url_for('uploaded_file', filename=file.filename) }}" 
+                                                     class="card-img-top" alt="Medical Image"
+                                                     style="max-height: 200px; width: auto; object-fit: contain;">
+                                            </a>
+                                        </div>
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ file.original_filename }}</h5>
+                                            <p class="card-text small text-muted">
+                                                <strong>Type:</strong> {{ file.file_type|replace('_', ' ')|title }}<br>
+                                                <strong>Uploaded:</strong> {{ file.upload_date|formatdatetime('date_only') }}
+                                            </p>
+                                            <div class="d-flex justify-content-between mt-3">
+                                                <a href="{{ url_for('view_medical_file', file_id=file._id) }}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-info-circle me-1"></i>Details
+                                                </a>
+                                                <a href="{{ url_for('view_image', file_id=file._id) }}" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-search-plus me-1"></i>View
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-images fa-4x text-muted mb-3"></i>
+                            <h5>No Medical Images Found</h5>
+                            <p class="text-muted">You don't have any medical images uploaded yet.</p>
+                            <a href="{{ url_for('upload_medical_file') }}" class="btn btn-primary mt-2">
+                                <i class="fas fa-upload me-2"></i>Upload Medical Images
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .hover-shadow {
+        transition: all 0.3s ease;
+    }
+    
+    .hover-shadow:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+    
+    .card-img-container {
+        transition: all 0.3s ease;
+    }
+    
+    .hover-shadow:hover .card-img-container {
+        background-color: #e9ecef;
+    }
+</style>
+{% endblock %} 

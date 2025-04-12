@@ -3,133 +3,429 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Healthcare System{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>{% block title %}HealthChain{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --primary-color: #0d6efd;
-            --secondary-color: #6c757d;
-            --light-color: #f8f9fa;
-            --dark-color: #212529;
+            /* Modern Healthcare Color Palette */
+            --primary: #0072CE;      /* Main brand blue */
+            --primary-dark: #005CAA;
+            --primary-light: #4DA3FF;
+            --secondary: #00A78E;    /* Teal accent */
+            --secondary-dark: #00866F;
+            --secondary-light: #4DD2C2;
+            --accent: #FF5A5F;       /* For important actions/alerts */
+            --success: #28A745;
+            --warning: #FFC107;
+            --danger: #DC3545;
+            --info: #17A2B8;
+            --light: #F8F9FA;
+            --dark: #343A40;
+            --gray: #6C757D;
+            --gray-light: #E9ECEF;
+            --gray-dark: #495057;
+            --white: #FFFFFF;
+            --body-bg: #F5F7FA;
         }
         
         body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--body-bg);
+            color: var(--gray-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
             font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+        
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background-color: var(--white);
         }
         
         .navbar-brand {
-            font-weight: bold;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            color: var(--primary);
         }
         
-        .card {
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            border: none;
-            transition: transform 0.3s ease;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .metamask-status {
-            padding: 0.5rem 1rem;
-            border-radius: 0.25rem;
-            margin-right: 1rem;
-        }
-        
-        .metamask-connected {
-            background-color: #28a745;
-            color: white;
-        }
-        
-        .metamask-disconnected {
-            background-color: #dc3545;
-            color: white;
-        }
-        
-        .btn {
+        .nav-link {
             font-weight: 500;
-            padding: 0.5rem 1.5rem;
-            border-radius: 0.5rem;
+            color: var(--gray-dark);
+            transition: all 0.2s ease;
+        }
+        
+        .nav-link:hover {
+            color: var(--primary);
+        }
+        
+        .nav-link.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
         }
         
         .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
+            background-color: var(--primary);
+            border-color: var(--primary);
         }
         
         .btn-primary:hover {
-            background-color: #0b5ed7;
-            border-color: #0a58ca;
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
         }
         
-        .section-header {
-            margin-bottom: 3rem;
+        .btn-secondary {
+            background-color: var(--secondary);
+            border-color: var(--secondary);
         }
         
-        .section-header h2 {
-            font-weight: 700;
-            margin-bottom: 1rem;
+        .btn-secondary:hover {
+            background-color: var(--secondary-dark);
+            border-color: var(--secondary-dark);
         }
         
-        .section-header p {
-            color: var(--secondary-color);
-            font-size: 1.1rem;
+        .btn-accent {
+            background-color: var(--accent);
+            border-color: var(--accent);
+            color: white;
         }
         
-        {% block extra_css %}{% endblock %}
+        .btn-accent:hover {
+            background-color: #e64146;
+            border-color: #e64146;
+            color: white;
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-outline-secondary {
+            color: var(--secondary);
+            border-color: var(--secondary);
+        }
+        
+        .btn-outline-secondary:hover {
+            background-color: var(--secondary);
+            border-color: var(--secondary);
+        }
+        
+        .card {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .card-header {
+            border-radius: 10px 10px 0 0 !important;
+            border-bottom: none;
+            font-weight: 600;
+        }
+        
+        .card-header.bg-primary {
+            background-color: var(--primary) !important;
+        }
+        
+        .card-header.bg-secondary {
+            background-color: var(--secondary) !important;
+        }
+        
+        .card-header.bg-success {
+            background-color: var(--success) !important;
+        }
+        
+        .card-header.bg-info {
+            background-color: var(--info) !important;
+        }
+        
+        .card-header.bg-danger {
+            background-color: var(--danger) !important;
+        }
+        
+        .main-content {
+            flex: 1;
+        }
+        
+        .footer {
+            background-color: var(--white);
+            padding: 1.5rem 0;
+            margin-top: auto;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+        
+        .badge {
+            font-weight: 500;
+            padding: 0.4em 0.8em;
+            border-radius: 6px;
+        }
+        
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .table thead th {
+            background-color: var(--gray-light);
+            border-bottom: none;
+            font-weight: 600;
+        }
+        
+        /* Custom form styles */
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid var(--gray-light);
+            padding: 0.6rem 1rem;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 0.25rem rgba(0, 114, 206, 0.25);
+        }
+        
+        .form-floating label {
+            padding-left: 1rem;
+        }
+        
+        /* Blockchain verification badge styles */
+        .badge.bg-success {
+            background-color: var(--success) !important;
+        }
+        
+        .badge.bg-warning {
+            background-color: var(--warning) !important;
+            color: var(--dark);
+        }
+        
+        .badge.bg-danger {
+            background-color: var(--danger) !important;
+        }
+        
+        /* Modal styles */
+        .modal-content {
+            border-radius: 12px;
+            border: none;
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid var(--gray-light);
+        }
+        
+        .modal-footer {
+            border-top: 1px solid var(--gray-light);
+        }
+        
+        /* Sidebar styles */
+        .sidebar {
+            background-color: var(--white);
+            height: 100%;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        /* MetaMask connection status */
+        .metamask-status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .metamask-status.connected {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .metamask-status.disconnected {
+            background-color: var(--gray-light);
+            color: var(--gray);
+        }
+        
+        /* File upload area */
+        .upload-area {
+            border: 2px dashed var(--gray-light);
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--primary-light);
+            background-color: rgba(0, 114, 206, 0.05);
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--gray-light);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--gray);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gray-dark);
+        }
+        
+        /* Utility classes */
+        .text-primary { color: var(--primary) !important; }
+        .text-secondary { color: var(--secondary) !important; }
+        .bg-primary { background-color: var(--primary) !important; }
+        .bg-secondary { background-color: var(--secondary) !important; }
+        .border-primary { border-color: var(--primary) !important; }
+        .border-secondary { border-color: var(--secondary) !important; }
     </style>
+    
+    {% block head %}
+    <!-- Additional head content specific to pages -->
+    {% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top mb-4">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('index') }}">Healthcare System</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Toggle navigation">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-hospital-user me-2"></i>HealthChain
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    {% if 'user_id' in session %}
+                <ul class="navbar-nav me-auto">
+                    {% if session.user_type %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('patients_list') }}">Patients</a>
+                            <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                                <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                            </a>
                         </li>
-                        {% if session.user_type == 'hospital' %}
+                        
+                        {% if session.user_type == 'patient' %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('register_doctor') }}">Register Doctor</a>
+                                <a class="nav-link {% if request.endpoint == 'upload_medical_file' %}active{% endif %}" href="{{ url_for('upload_medical_file') }}">
+                                    <i class="fas fa-file-upload me-1"></i> Upload Record
+                                </a>
+                            </li>
+                        {% elif session.user_type == 'doctor' %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'upload_medical_file' %}active{% endif %}" href="{{ url_for('upload_medical_file') }}">
+                                    <i class="fas fa-file-medical me-1"></i> Upload Medical File
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'view_patients' %}active{% endif %}" href="{{ url_for('view_patients') }}">
+                                    <i class="fas fa-user-injured me-1"></i> View Patients
+                                </a>
+                            </li>
+                        {% elif session.user_type == 'hospital' %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'register_doctor' %}active{% endif %}" href="{{ url_for('register_doctor') }}">
+                                    <i class="fas fa-user-md me-1"></i> Register Doctor
+                                </a>
                             </li>
                         {% endif %}
-                        {% if session.user_type == 'doctor' or session.user_type == 'hospital' %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('register_patient') }}">Register Patient</a>
-                            </li>
-                        {% endif %}
+                        
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                            <a class="nav-link {% if request.endpoint == 'blockchain_data' %}active{% endif %}" href="{{ url_for('blockchain_data') }}">
+                                <i class="fas fa-cubes me-1"></i> Blockchain Data
+                            </a>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                            <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">
+                                <i class="fas fa-home me-1"></i> Home
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('register_hospital') }}">Register Hospital</a>
+                            <a class="nav-link {% if request.endpoint == 'login' %}active{% endif %}" href="{{ url_for('login') }}">
+                                <i class="fas fa-sign-in-alt me-1"></i> Login
+                            </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('register_patient') }}">Register Patient</a>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="registerDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-plus me-1"></i> Register
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="registerDropdown">
+                                <li><a class="dropdown-item" href="{{ url_for('register_patient') }}">As Patient</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('register_doctor') }}">As Doctor</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('register_hospital') }}">As Hospital</a></li>
+                            </ul>
                         </li>
                     {% endif %}
                 </ul>
+                
+                {% if session.user_id %}
+                    <div class="d-flex align-items-center">
+                        {% if session.user_type == 'patient' %}
+                            <span id="metamask-status" class="metamask-status disconnected me-3">
+                                <i class="fas fa-wallet me-1"></i> Not Connected
+                            </span>
+                        {% endif %}
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                                {% if session.user_type == 'patient' %}
+                                    <i class="fas fa-user-injured me-1"></i>
+                                {% elif session.user_type == 'doctor' %}
+                                    <i class="fas fa-user-md me-1"></i>
+                                {% elif session.user_type == 'hospital' %}
+                                    <i class="fas fa-hospital me-1"></i>
+                                {% endif %}
+                                {{ session.name or 'Account' }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                                <li><a class="dropdown-item" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </nav>
 
-    <div class="container mt-4">
+    <!-- Flash Messages -->
+    <div class="container">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show">
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                         {{ message }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
@@ -138,59 +434,50 @@
         {% endwith %}
     </div>
 
-    {% block content %}{% endblock %}
+    <!-- Main Content -->
+    <div class="container main-content mb-5">
+        {% block content %}{% endblock %}
+    </div>
 
-    <footer class="bg-light text-center py-3 mt-5">
-        <p>© 2023 Healthcare System</p>
+    <!-- Footer -->
+    <footer class="footer text-center">
+        <div class="container">
+            <p class="mb-0">&copy; {{ now.year }} HealthChain - Secure Healthcare Records on Blockchain</p>
+            <div class="mt-2">
+                <a href="#" class="text-muted me-3"><i class="fas fa-shield-alt me-1"></i>Privacy Policy</a>
+                <a href="#" class="text-muted me-3"><i class="fas fa-file-contract me-1"></i>Terms of Service</a>
+                <a href="#" class="text-muted"><i class="fas fa-question-circle me-1"></i>Help</a>
+            </div>
+        </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
-    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Common JavaScript Functions -->
     <script>
-        // Initialize AOS
-        AOS.init({
-            once: true,
-            disable: 'mobile'
-        });
-
-        // MetaMask Integration - Error handling
-        let web3Available = false;
-        try {
-            if (typeof window.ethereum !== 'undefined') {
-                web3Available = true;
-                const metamaskStatus = document.getElementById('metamaskStatus');
-                
-                if (metamaskStatus) {
-                    // Check if already connected
-                    window.ethereum.request({ method: 'eth_accounts' })
-                        .then(accounts => {
-                            if (accounts.length > 0) {
-                                metamaskStatus.className = 'metamask-status metamask-connected';
-                                metamaskStatus.innerHTML = `<i class="bi bi-wallet2"></i> Connected: ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`;
-                            }
-                        })
-                        .catch(err => {
-                            console.error('Error checking MetaMask accounts:', err);
-                        });
-
-                    // Listen for account changes
-                    window.ethereum.on('accountsChanged', (accounts) => {
-                        if (accounts.length > 0) {
-                            metamaskStatus.className = 'metamask-status metamask-connected';
-                            metamaskStatus.innerHTML = `<i class="bi bi-wallet2"></i> Connected: ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`;
-                        } else {
-                            metamaskStatus.className = 'metamask-status metamask-disconnected';
-                            metamaskStatus.innerHTML = '<i class="bi bi-wallet2"></i> MetaMask Not Connected';
-                        }
-                    });
-                }
-            }
-        } catch (error) {
-            console.error('Web3 initialization error:', error);
+        // Copy to clipboard functionality
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            element.select();
+            element.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(element.value);
+            
+            // Optional: Show feedback
+            const tooltip = document.createElement('div');
+            tooltip.className = 'position-fixed top-50 start-50 translate-middle px-3 py-2 bg-dark text-white rounded';
+            tooltip.style.zIndex = '1070';
+            tooltip.innerHTML = 'Copied!';
+            document.body.appendChild(tooltip);
+            
+            setTimeout(() => {
+                tooltip.remove();
+            }, 1500);
         }
-
-        {% block extra_js %}{% endblock %}
     </script>
+    
+    {% block scripts %}
+    <!-- Additional scripts specific to pages -->
+    {% endblock %}
 </body>
 </html> 

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Select Your Providers{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h3 class="mb-0"><i class="fas fa-hospital-user me-2"></i>Select Your Healthcare Providers</h3>
+            </div>
+            <div class="card-body">
+                <p>Welcome, {{ patient.name }}! To help manage your health records effectively, please tell us which hospital and doctor(s) you have visited previously.</p>
+                
+                <form method="POST" action="{{ url_for('select_providers_submit') }}">
+                    <!-- Hidden input for patient ID if needed, though session might suffice -->
+                    <!-- <input type="hidden" name="patient_id" value="{{ patient._id }}"> -->
+                    
+                    <div class="mb-4">
+                        <label for="hospital_id" class="form-label fs-5">Primary Hospital Visited</label>
+                        <select class="form-select" id="hospital_id" name="hospital_id" required>
+                            <option value="" selected disabled>-- Select Hospital --</option>
+                            {% for hospital in hospitals %}
+                                <option value="{{ hospital._id }}">{{ hospital.name }}</option>
+                            {% endfor %}
+                        </select>
+                         <small class="form-text text-muted">Select the main hospital you have visited.</small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fs-5">Doctor(s) Visited</label>
+                        <div class="border p-3 rounded bg-light" style="max-height: 300px; overflow-y: auto;">
+                             {% if doctors %}
+                                {% for doctor in doctors %}
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" value="{{ doctor._id }}" id="doc_{{ doctor._id }}" name="doctor_ids">
+                                    <label class="form-check-label" for="doc_{{ doctor._id }}">
+                                        <strong>{{ doctor.name }}</strong> 
+                                        {% if doctor.specialization %}
+                                            <small class="text-muted"> - 
+                                            {% if doctor.specialization is iterable and doctor.specialization is not string %}
+                                                {{ doctor.specialization | join(', ') }}
+                                            {% else %}
+                                                {{ doctor.specialization }}
+                                            {% endif %}
+                                            </small>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-muted">No doctors found in the system.</p>
+                            {% endif %}
+                        </div>
+                        <small class="form-text text-muted">Select all doctors you have visited previously.</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-save me-2"></i>Save Selections</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

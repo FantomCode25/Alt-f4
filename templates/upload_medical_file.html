@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Medical File - HealthChain{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-file-medical me-2"></i>Upload Medical Document</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('upload_medical_file') }}" enctype="multipart/form-data" class="upload-form">
+                    <div class="mb-4">
+                        <label for="patient_id" class="form-label fw-medium">Select Patient</label>
+                        <select class="form-select form-select-lg" id="patient_id" name="patient_id" required>
+                            <option value="" selected disabled>-- Select Patient --</option>
+                            {% for patient in patients %}
+                            <option value="{{ patient._id }}">{{ patient.name }} ({{ patient.email }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="file_type" class="form-label fw-medium">Document Type</label>
+                        <select class="form-select" id="file_type" name="file_type" required>
+                            <option value="" selected disabled>-- Select Document Type --</option>
+                            <optgroup label="Imaging">
+                                <option value="imaging_xray">X-Ray</option>
+                                <option value="imaging_ct">CT Scan</option>
+                                <option value="imaging_mri">MRI</option>
+                                <option value="imaging_ultrasound">Ultrasound</option>
+                                <option value="imaging_other">Other Imaging</option>
+                            </optgroup>
+                            <optgroup label="Photos">
+                                <option value="photo_wound">Wound/Injury Photo</option>
+                                <option value="photo_skin">Skin Condition</option>
+                                <option value="photo_surgical">Surgical Site</option>
+                                <option value="photo_radiology">Radiology Image</option>
+                                <option value="photo_other">Other Medical Photo</option>
+                            </optgroup>
+                            <optgroup label="Lab Results">
+                                <option value="lab_result_blood">Blood Test</option>
+                                <option value="lab_result_urine">Urine Test</option>
+                                <option value="lab_result_biopsy">Biopsy Result</option>
+                                <option value="lab_result_other">Other Lab Result</option>
+                            </optgroup>
+                            <optgroup label="Reports">
+                                <option value="medical_report">Medical Report</option>
+                                <option value="prescription">Prescription</option>
+                                <option value="discharge_summary">Discharge Summary</option>
+                                <option value="consultation_notes">Consultation Notes</option>
+                            </optgroup>
+                            <option value="other">Other Document</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="description" class="form-label fw-medium">Description (Optional)</label>
+                        <textarea class="form-control" id="description" name="description" rows="2" 
+                                  placeholder="Briefly describe this document/image"></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="file" class="form-label fw-medium">Select File</label>
+                        <div class="upload-area" id="upload-area">
+                            <div class="upload-area-inner">
+                                <div class="upload-icon mb-3">
+                                    <i class="fas fa-cloud-upload-alt fa-3x text-primary"></i>
+                                </div>
+                                <p class="mb-2">Drag & drop file here or click to browse</p>
+                                <p class="text-muted small mb-0">Accepted formats: PDF, JPG, JPEG, PNG, GIF, BMP. Maximum file size: 10MB</p>
+                            </div>
+                            <input type="file" class="form-control" id="file" name="file" accept=".pdf,.jpg,.jpeg,.png,.gif,.bmp" required hidden>
+                        </div>
+                        <div id="file-info" class="mt-2 ps-2 d-none">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-file-medical me-2 text-primary"></i>
+                                <span id="file-name"></span>
+                                <button type="button" class="btn btn-sm text-danger ms-2" id="remove-file" aria-label="Remove file">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Image preview area -->
+                        <div id="image-preview-container" class="mt-3 text-center d-none">
+                            <p class="small text-muted mb-2">Image Preview:</p>
+                            <img id="image-preview" class="img-fluid img-thumbnail" style="max-height: 200px;" alt="Image Preview">
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info bg-info bg-opacity-10 border-0">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="fas fa-robot fa-2x text-info"></i>
+                            </div>
+                            <div>
+                                <h5 class="alert-heading">AI Processing</h5>
+                                <p class="mb-0">The document will be automatically processed with OCR to extract text, and an AI summary will be generated. This information will be securely stored and associated with the patient's record.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-primary bg-primary bg-opacity-10 border-0 mb-4">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="fas fa-shield-alt fa-2x text-primary"></i>
+                            </div>
+                            <div>
+                                <h5 class="alert-heading">Blockchain & Encryption</h5>
+                                <p class="mb-0">Document metadata will be stored in blockchain for integrity verification. Patient data is encrypted and only accessible to authorized personnel.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-upload me-2"></i>Upload & Process Document
+                        </button>
+                        <a href="{{ url_for('doctor_dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file');
+        const fileInfo = document.getElementById('file-info');
+        const fileName = document.getElementById('file-name');
+        const removeFileBtn = document.getElementById('remove-file');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        
+        // Handle click on upload area
+        uploadArea.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        // Handle drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            uploadArea.classList.add('highlight');
+        }
+        
+        function unhighlight() {
+            uploadArea.classList.remove('highlight');
+        }
+        
+        // Handle file drop
+        uploadArea.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
+            updateFileInfo();
+        }
+        
+        // Handle file selection
+        fileInput.addEventListener('change', updateFileInfo);
+        
+        function updateFileInfo() {
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                fileName.textContent = file.name;
+                fileInfo.classList.remove('d-none');
+                uploadArea.classList.add('has-file');
+                
+                // Check if it's an image file
+                const fileType = file.type;
+                if (fileType.startsWith('image/')) {
+                    // Show image preview
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        imagePreviewContainer.classList.remove('d-none');
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    // Hide image preview for non-image files
+                    imagePreviewContainer.classList.add('d-none');
+                }
+            } else {
+                fileInfo.classList.add('d-none');
+                uploadArea.classList.remove('has-file');
+                imagePreviewContainer.classList.add('d-none');
+            }
+        }
+        
+        // Handle file removal
+        removeFileBtn.addEventListener('click', function() {
+            fileInput.value = '';
+            fileInfo.classList.add('d-none');
+            uploadArea.classList.remove('has-file');
+            imagePreviewContainer.classList.add('d-none');
+        });
+        
+        // Update file type options based on the selected file
+        fileInput.addEventListener('change', function() {
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                const fileType = file.type;
+                const fileTypeSelect = document.getElementById('file_type');
+                
+                // Auto-select appropriate file type group based on the file type
+                if (fileType.startsWith('image/')) {
+                    // For image files, select the Photos group options
+                    const photoOptions = Array.from(fileTypeSelect.options).filter(option => 
+                        option.value.startsWith('photo_') || 
+                        option.value.startsWith('imaging_')
+                    );
+                    if (photoOptions.length > 0) {
+                        photoOptions[0].selected = true;
+                    }
+                } else if (fileType === 'application/pdf') {
+                    // For PDF files, don't change selection
+                }
+            }
+        });
+    });
+</script>
+
+<style>
+    .upload-area {
+        border: 2px dashed var(--gray-light);
+        border-radius: 10px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .upload-area:hover {
+        border-color: var(--primary-light);
+        background-color: rgba(0, 114, 206, 0.05);
+    }
+    
+    .upload-area.highlight {
+        border-color: var(--primary);
+        background-color: rgba(0, 114, 206, 0.1);
+    }
+    
+    .upload-area.has-file {
+        border-color: var(--primary);
+        background-color: rgba(0, 114, 206, 0.1);
+    }
+    
+    .form-select, .form-control {
+        padding: 0.75rem 1rem;
+    }
+    
+    .upload-form label {
+        margin-bottom: 0.5rem;
+        color: var(--dark);
+    }
+</style>
+{% endblock %}
+{% endblock %} 

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Medical Record - HealthChain{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-file-medical me-2"></i> Upload Medical Record</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('upload_medical_file') }}" enctype="multipart/form-data">
+                        <input type="hidden" name="patient_id" value="{{ patient._id }}">
+                        <div class="mb-3">
+                            <label for="patient_name" class="form-label">Patient Name</label>
+                            <input type="text" class="form-control" id="patient_name" value="{{ patient.name }}" readonly>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Medical Document</label>
+                            <input type="file" class="form-control" id="file" name="file" accept=".pdf,.jpg,.jpeg,.png,.gif,.bmp" required>
+                            <div class="form-text">Accepted formats: PDF, JPG, JPEG, PNG, GIF, BMP. Maximum file size: 10MB</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="file_type" class="form-label">Document Type</label>
+                            <select class="form-select" id="file_type" name="file_type" required>
+                                <option value="" selected disabled>-- Select Document Type --</option>
+                                <optgroup label="Lab Results">
+                                    <option value="lab_result_blood">Blood Test</option>
+                                    <option value="lab_result_urine">Urine Test</option>
+                                    <option value="lab_result_biopsy">Biopsy Result</option>
+                                    <option value="lab_result_other">Other Lab Result</option>
+                                </optgroup>
+                                <optgroup label="Imaging">
+                                    <option value="imaging_xray">X-Ray</option>
+                                    <option value="imaging_ct">CT Scan</option>
+                                    <option value="imaging_mri">MRI</option>
+                                    <option value="imaging_ultrasound">Ultrasound</option>
+                                    <option value="imaging_other">Other Imaging</option>
+                                </optgroup>
+                                <optgroup label="Reports">
+                                    <option value="medical_report">Medical Report</option>
+                                    <option value="prescription">Prescription</option>
+                                    <option value="discharge_summary">Discharge Summary</option>
+                                    <option value="consultation_notes">Consultation Notes</option>
+                                </optgroup>
+                                <option value="other">Other Document</option>
+                            </select>
+                        </div>
+
+                      
+                        
+                        {% if doctors %}
+                        <div class="mb-3">
+                            <label class="form-label">Share with Doctors</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="select_all">
+                                <label class="form-check-label" for="select_all">Select All</label>
+                            </div>
+                            <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                                {% for doctor in doctors %}
+                                <div class="form-check">
+                                    <input class="form-check-input doctor-checkbox" type="checkbox" 
+                                           name="selected_doctors" value="{{ doctor._id }}" id="doctor_{{ doctor._id }}">
+                                    <label class="form-check-label" for="doctor_{{ doctor._id }}">
+                                        {{ doctor.name }} - {{ doctor.specialization }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No authorized doctors found for this patient.
+                        </div>
+                        {% endif %}
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>AI Processing:</strong> Your document will be automatically processed to extract text and generate a summary. This makes it easier to search and reference later.
+                        </div>
+                        
+                        <div class="alert alert-secondary">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            <strong>Blockchain & Encryption:</strong> Your document will be cryptographically protected on the blockchain for verifiable integrity. Access is restricted to you and healthcare providers you authorize.
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i> Upload & Process Document
+                            </button>
+                            <a href="{{ url_for('patient_dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    // Select all doctors checkbox functionality
+    document.getElementById('select_all').addEventListener('change', function() {
+        const checkboxes = document.getElementsByClassName('doctor-checkbox');
+        for (let checkbox of checkboxes) {
+            checkbox.checked = this.checked;
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %} 

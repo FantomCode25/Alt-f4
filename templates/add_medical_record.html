@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Add Medical Record - HealthChain{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-notes-medical me-2"></i>Add Medical Record</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('add_medical_record', patient_id=patient_id) }}">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            This record will be encrypted with the patient's public key and stored securely on the blockchain.
+                            Only the patient and authorized healthcare providers will be able to access this information.
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="condition" class="form-label">Medical Condition</label>
+                            <input type="text" class="form-control" id="condition" name="condition" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="medication" class="form-label">Medication</label>
+                            <input type="text" class="form-control" id="medication" name="medication" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="allergies" class="form-label">Allergies</label>
+                            <input type="text" class="form-control" id="allergies" name="allergies" placeholder="Comma-separated list of allergies">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="4"></textarea>
+                        </div>
+                        
+                        <div class="alert alert-secondary">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            <strong>Blockchain & Encryption:</strong> This record will be cryptographically protected 
+                            on the blockchain for verifiable integrity. Your data is encrypted and only accessible to you 
+                            and healthcare providers you authorize.
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Medical Record
+                            </button>
+                            <a href="{{ url_for('patient_dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

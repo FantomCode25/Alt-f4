@@ -1,49 +1,92 @@
 <!-- login.html -->
 {% extends "base.html" %}
 
-{% block title %}Login - Healthcare System{% endblock %}
+{% block title %}Login - HealthChain{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="bi bi-box-arrow-in-right"></i> Login</h4>
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-user-lock me-2"></i>Login to HealthChain</h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-4">
+                    <!-- Patient Block -->
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-sm hover-card">
+                            <div class="card-body text-center p-4">
+                                <div class="rounded-circle bg-primary bg-opacity-10 p-3 d-inline-flex mb-3">
+                                    <i class="fas fa-user-injured fa-2x text-primary"></i>
+                                </div>
+                                <h5 class="card-title">Patient Login</h5>
+                                <p class="card-text text-secondary">Access your health records and manage your data securely</p>
+                                <a href="{{ url_for('patient_login') }}" class="btn btn-primary w-100">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login as Patient
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Doctor Block -->
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-sm hover-card">
+                            <div class="card-body text-center p-4">
+                                <div class="rounded-circle bg-secondary bg-opacity-10 p-3 d-inline-flex mb-3">
+                                    <i class="fas fa-user-md fa-2x text-secondary"></i>
+                                </div>
+                                <h5 class="card-title">Doctor Login</h5>
+                                <p class="card-text text-secondary">Access patient records and provide medical care</p>
+                                <a href="{{ url_for('doctor_login') }}" class="btn btn-secondary w-100">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login as Doctor
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hospital Block -->
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-sm hover-card">
+                            <div class="card-body text-center p-4">
+                                <div class="rounded-circle" style="background-color: rgba(255,90,95,0.1); padding: 0.75rem; display: inline-flex; margin-bottom: 0.75rem;">
+                                    <i class="fas fa-hospital fa-2x" style="color: var(--accent);"></i>
+                                </div>
+                                <h5 class="card-title">Hospital Login</h5>
+                                <p class="card-text text-secondary">Manage hospital operations and patient care</p>
+                                <a href="{{ url_for('hospital_login') }}" class="btn btn-accent w-100">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login as Hospital
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <form method="POST" action="{{ url_for('login') }}">
-                        <div class="mb-3">
-                            <label for="user_type" class="form-label">User Type</label>
-                            <select class="form-select" id="user_type" name="user_type" required>
-                                <option value="" selected disabled>Select your user type</option>
-                                <option value="patient">Patient</option>
-                                <option value="doctor">Doctor</option>
-                                <option value="hospital">Hospital</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" name="email" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="password" name="password" required>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">Login</button>
-                        </div>
-                    </form>
-                </div>
-                <div class="card-footer text-center">
-                    <p class="mb-0">Don't have an account?</p>
-                    <div class="mt-2">
-                        <a href="{{ url_for('register_patient') }}" class="btn btn-sm btn-outline-primary">Register as Patient</a>
-                        <a href="{{ url_for('register_hospital') }}" class="btn btn-sm btn-outline-primary">Register as Hospital</a>
+
+                <div class="text-center mt-5">
+                    <p class="mb-3 text-secondary">Don't have an account yet? Register as:</p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{{ url_for('register_patient') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-user-plus me-2"></i>Patient
+                        </a>
+                        <a href="{{ url_for('register_doctor') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-user-md me-2"></i>Doctor
+                        </a>
+                        <a href="{{ url_for('register_hospital') }}" class="btn btn-outline-accent" style="color: var(--accent); border-color: var(--accent);">
+                            <i class="fas fa-hospital me-2"></i>Hospital
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.hover-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+</style>
 {% endblock %}

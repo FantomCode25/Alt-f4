@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}View Medical Image - HealthChain{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="fas fa-image me-2"></i>Medical Image Viewer</h4>
+                    <div>
+                        <a href="{{ url_for('view_medical_file', file_id=file._id) }}" class="btn btn-light btn-sm">
+                            <i class="fas fa-file-medical me-1"></i>View File Details
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-0 bg-dark text-center" style="min-height: 75vh; display: flex; align-items: center; justify-content: center;">
+                    <div class="image-controls position-absolute top-0 end-0 m-3">
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-dark zoom-in" title="Zoom In">
+                                <i class="fas fa-search-plus"></i>
+                            </button>
+                            <button class="btn btn-sm btn-dark zoom-out" title="Zoom Out">
+                                <i class="fas fa-search-minus"></i>
+                            </button>
+                            <button class="btn btn-sm btn-dark rotate-left" title="Rotate Left">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                            <button class="btn btn-sm btn-dark rotate-right" title="Rotate Right">
+                                <i class="fas fa-redo"></i>
+                            </button>
+                            <button class="btn btn-sm btn-dark reset-image" title="Reset Image">
+                                <i class="fas fa-sync"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="medical-image-container">
+                        <img id="medical-image" src="{{ url_for('uploaded_file', filename=filename) }}" 
+                             class="img-fluid" alt="Medical Image"
+                             data-original-src="{{ url_for('uploaded_file', filename=filename) }}"
+                             style="max-height: 75vh; max-width: 100%;">
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-0"><strong>Filename:</strong> {{ file.original_filename }}</p>
+                            <p class="mb-0 small text-muted">Uploaded: {{ file.upload_date | formatdatetime }}</p>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('uploaded_file', filename=filename) }}" class="btn btn-primary" download>
+                                <i class="fas fa-download me-2"></i>Download
+                            </a>
+                            <a href="javascript:history.back()" class="btn btn-secondary ms-2">
+                                <i class="fas fa-arrow-left me-2"></i>Back
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="annotationModal" tabindex="-1" aria-labelledby="annotationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="annotationModalLabel">Add Annotation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="annotationForm">
+                    <div class="mb-3">
+                        <label for="annotationText" class="form-label">Annotation Text</label>
+                        <textarea class="form-control" id="annotationText" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="annotationColor" class="form-label">Color</label>
+                        <select class="form-select" id="annotationColor">
+                            <option value="red">Red</option>
+                            <option value="blue">Blue</option>
+                            <option value="green">Green</option>
+                            <option value="yellow">Yellow</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveAnnotation">Save Annotation</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const img = document.getElementById('medical-image');
+    let scale = 1;
+    let rotation = 0;
+    
+    // Zoom in
+    document.querySelector('.zoom-in').addEventListener('click', function() {
+        scale += 0.1;
+        applyTransform();
+    });
+    
+    // Zoom out
+    document.querySelector('.zoom-out').addEventListener('click', function() {
+        if (scale > 0.2) {
+            scale -= 0.1;
+            applyTransform();
+        }
+    });
+    
+    // Rotate left
+    document.querySelector('.rotate-left').addEventListener('click', function() {
+        rotation -= 90;
+        applyTransform();
+    });
+    
+    // Rotate right
+    document.querySelector('.rotate-right').addEventListener('click', function() {
+        rotation += 90;
+        applyTransform();
+    });
+    
+    // Reset image
+    document.querySelector('.reset-image').addEventListener('click', function() {
+        scale = 1;
+        rotation = 0;
+        applyTransform();
+    });
+    
+    function applyTransform() {
+        img.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
+    }
+    
+    // Enable pan/drag on the image
+    let isDragging = false;
+    let startX, startY, translateX = 0, translateY = 0;
+    
+    img.addEventListener('mousedown', function(e) {
+        isDragging = true;
+        startX = e.clientX - translateX;
+        startY = e.clientY - translateY;
+        img.style.cursor = 'grabbing';
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        translateX = e.clientX - startX;
+        translateY = e.clientY - startY;
+        img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale}) rotate(${rotation}deg)`;
+    });
+    
+    document.addEventListener('mouseup', function() {
+        isDragging = false;
+        img.style.cursor = 'grab';
+    });
+    
+    // Double click to reset
+    img.addEventListener('dblclick', function() {
+        scale = 1;
+        rotation = 0;
+        translateX = 0;
+        translateY = 0;
+        applyTransform();
+    });
+});
+</script>
+{% endblock %} 

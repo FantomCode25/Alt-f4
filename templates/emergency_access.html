@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Emergency Access - HealthChain{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header" style="background-color: var(--accent); color: white;">
+                <h4 class="mb-0"><i class="fas fa-ambulance me-2"></i>Emergency Access</h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-warning bg-warning bg-opacity-10 border-start border-warning border-4">
+                    <div class="d-flex">
+                        <div class="me-3">
+                            <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+                        </div>
+                        <div>
+                            <h5 class="alert-heading">For Emergency Personnel Only</h5>
+                            <p class="mb-0">This portal is for emergency medical personnel only. It provides access to critical medical information that may be vital in emergency situations.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                    {% for category, message in messages %}
+                      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                      </div>
+                    {% endfor %}
+                  {% endif %}
+                {% endwith %}
+                
+                <form method="POST" action="{{ url_for('emergency_access') }}" class="mt-4">
+                    <div class="mb-4">
+                        <label for="patient_name" class="form-label fw-medium">Patient Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-user-injured"></i></span>
+                            <input type="text" class="form-control form-control-lg" id="patient_name" name="patient_name" placeholder="Enter patient's full name" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="emergency_pin" class="form-label fw-medium">Emergency PIN</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-key"></i></span>
+                            <input type="password" class="form-control form-control-lg" id="emergency_pin" name="emergency_pin" placeholder="Enter emergency PIN code" required>
+                        </div>
+                        <div class="form-text">Enter the 4-6 digit emergency PIN provided by the patient or their family.</div>
+                    </div>
+                    
+                    <button type="submit" class="btn w-100 btn-lg mb-3" style="background-color: var(--accent); color: white;">
+                        <i class="fas fa-unlock-alt me-2"></i>Access Emergency Information
+                    </button>
+                    
+                    <div class="mt-4 text-center">
+                        <p class="text-secondary small mb-2">Not an emergency?</p>
+                        <a href="{{ url_for('login') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Return to Regular Login
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <p class="text-secondary small mb-0">
+                <i class="fas fa-shield-alt me-1"></i> All emergency access attempts are logged for patient security
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %} 
