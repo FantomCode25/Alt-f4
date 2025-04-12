@@ -58,29 +58,20 @@ load_dotenv()
 # --- Date Formatting Filter --- 
 @app.template_filter('formatdatetime')
 def format_datetime(value, format='medium'):
-    if value is None:
-        return ""
-    if isinstance(value, str):
-        try:
-            # Attempt to parse common string formats if needed
-            value = datetime.fromisoformat(value) 
-        except ValueError:
-             return value # Return original string if parsing fails
-             
     if format == 'full':
-        format="EEEE, d MMMM y 'at' h:mm:ss a zzzz"
+        format="EEEE, d MMMM y 'at' HH:mm"
     elif format == 'medium':
-        format="MMM d, y, h:mm:ss a"
-    elif format == 'short':
-         format="M/d/yy, h:mm a"
+        format="d MMM y HH:mm"
     elif format == 'date_only':
-         format="MMM d, yyyy"
+        format="d MMM y"
+    elif format == 'time_only':
+        format="HH:mm"
     return babel.dates.format_datetime(value, format)
 
 # Context processor to inject datetime object into templates
 @app.context_processor
 def inject_now():
-    return {'now': datetime.now(timezone.utc)}
+    return {'now': datetime.now(), 'timedelta': timedelta}
 
 # Configure upload folder
 UPLOAD_FOLDER = 'uploads'
@@ -971,150 +962,131 @@ def dashboard():
 # --- Dedicated Doctor Dashboard Route --- 
 @app.route('/doctor_dashboard')
 @login_required
-@doctor_required
 def doctor_dashboard():
-    doctor_id_str = session['user_id']
-    doctor_id = ObjectId(doctor_id_str)
-        
-    # Find doctor record
-    doctor = doctors.find_one({'_id': doctor_id})
-        
-    # Query MongoDB to find patients where this doctor is authorized
-    patient_list = list(patients.find({'authorized_doctors': doctor_id_str}))
+    if session.get('user_type') != 'doctor':
+        flash('Access denied: You do not have permission to view this page', 'danger')
+        return redirect(url_for('index'))
     
-    # Get all medical records where doctor has access
-    if patient_list:
-        patient_ids = [patient['_id'] for patient in patient_list]
-        
-        # Find medical records
-        record_list = list(medical_records.find({
-            'patient_id': {'$in': patient_ids}
-        }).sort('date', -1))
-        
-        # Find medical files shared with this doctor
-        shared_files_query = {
-            '$or': [
-                {'uploader_id': doctor_id},  # Files uploaded by this doctor
-                {'shared_with': {'$in': [doctor_id_str]}},  # Files explicitly shared with this doctor
-                {'patient_id': {'$in': patient_ids}}  # Files of patients who authorized this doctor
-            ]
-        }
-        
-        recent_uploads = list(medical_files.find(shared_files_query).sort('upload_date', -1).limit(20))
-        
-        # Enrich the data with patient names
-        patient_map = {str(patient['_id']): patient['name'] for patient in patient_list}
-        for file in recent_uploads:
-            patient_id = file.get('patient_id')
-            if patient_id:
-                patient_id_str = str(patient_id)
-                if patient_id_str in patient_map:
-                    file['patient_name'] = patient_map[patient_id_str]
-                else:
-                    # If patient not in our map, fetch their name
-                    try:
-                        patient = patients.find_one({'_id': patient_id}, {'name': 1})
-                        file['patient_name'] = patient['name'] if patient else 'Unknown Patient'
-                        # Update our map for future lookups
-                        patient_map[patient_id_str] = file['patient_name']
-                    except Exception as e:
-                        print(f"Error fetching patient name for file {file.get('_id')}: {e}")
-                        file['patient_name'] = 'Unknown Patient'
-    else:
-        record_list = []
-        recent_uploads = []
-        
-    return render_template('doctor_dashboard.html', 
+    doctor_id = session['user_id']
+    
+    # Get doctor information
+    doctor = db.doctors.find_one({"_id": ObjectId(doctor_id)})
+    
+    # Get shared medical records for this doctor
+    shared_records = list(db.shared_files.find({
+        "shared_with_doctor": str(doctor_id)
+    }).sort("shared_date", -1))
+    
+    # Enrich shared records with patient names
+    for record in shared_records:
+        try:
+            patient = db.patients.find_one({"_id": ObjectId(record["patient_id"])})
+            if patient:
+                record["patient_name"] = patient.get("name", "Unknown Patient")
+            else:
+                record["patient_name"] = "Unknown Patient"
+        except Exception as e:
+            record["patient_name"] = "Unknown Patient"
+            app.logger.error(f"Error fetching patient: {str(e)}")
+    
+    # Get a list of all patients who have authorized this doctor
+    patient_ids = list(set(record["patient_id"] for record in shared_records))
+    authorized_patients = list(db.patients.find({
+        "_id": {"$in": [ObjectId(id) for id in patient_ids]}
+    }))
+    
+    return render_template('doctor_dashboard.html',
                           doctor=doctor,
-                          patients=patient_list, 
-                          records=record_list,
-                          recent_uploads=recent_uploads)
+                          shared_records=shared_records,
+                          authorized_patients=authorized_patients,
+                          now=datetime.now())
 
 # --- Dedicated Patient Dashboard Route --- 
 @app.route('/patient_dashboard')
 @login_required
-@patient_required
 def patient_dashboard():
-    patient_id_str = session['user_id']
-    patient_id = ObjectId(patient_id_str)
+    if session.get('user_type') != 'patient':
+        flash('Access denied: You do not have permission to view this page', 'danger')
+        return redirect(url_for('index'))
     
-    # Find patient record
-    patient = patients.find_one({'_id': patient_id})
+    patient_id = session['user_id']
     
-    # Get patient's medical records
-    record_list = list(medical_records.find({
-        'patient_id': patient_id
-    }).sort('date', -1))
+    # Get patient information
+    patient = db.patients.find_one({"_id": ObjectId(patient_id)})
     
-    # Get patient's medical files
-    medical_file_list = list(medical_files.find({
-        'patient_id': patient_id
-    }).sort('upload_date', -1))
+    # Get all medical records for this patient
+    medical_records = list(db.medical_records.find({
+        "patient_id": str(patient_id)
+    }).sort("date", -1))
     
-    # Get authorized doctors
+    # Get authorized doctors for this patient
     authorized_doctors = []
-    if 'authorized_doctors' in patient:
-        doctor_ids = patient['authorized_doctors']
-        if doctor_ids:
-            authorized_doctors = list(doctors.find({
-                '_id': {'$in': [ObjectId(doc_id) for doc_id in doctor_ids if doc_id]}
-            }))
+    if patient and "authorized_doctors" in patient:
+        doctor_ids = patient["authorized_doctors"]
+        authorized_doctors = list(db.doctors.find({
+            "_id": {"$in": [ObjectId(id) for id in doctor_ids]}
+        }))
+    
+    # Get authorized hospitals for this patient
+    authorized_hospitals = []
+    if patient and "authorized_hospitals" in patient:
+        hospital_ids = patient["authorized_hospitals"]
+        authorized_hospitals = list(db.hospitals.find({
+            "_id": {"$in": [ObjectId(id) for id in hospital_ids]}
+        }))
+    
+    # Get all available doctors for the access form
+    available_doctors = list(db.doctors.find())
     
     return render_template('patient_dashboard.html',
                           patient=patient,
-                          records=record_list,
-                          medical_files=medical_file_list,
-                          authorized_doctors=authorized_doctors)
+                          medical_records=medical_records,
+                          authorized_doctors=authorized_doctors,
+                          authorized_hospitals=authorized_hospitals,
+                          available_doctors=available_doctors,
+                          now=datetime.now())
 
 # --- Dedicated Hospital Dashboard Route --- 
 @app.route('/hospital_dashboard')
 @login_required
 def hospital_dashboard():
-    user_id_str = session['user_id'] # Logged-in hospital's MongoDB ID
-    print(f"\n--- Loading Hospital Dashboard for User ID: {user_id_str} ---")
-    hospital = None
-    registered_doctors = []
-    shared_records = [] # Use shared_records instead of accessible_patients
+    if session.get('user_type') != 'hospital':
+        flash('Access denied: You do not have permission to view this page', 'danger')
+        return redirect(url_for('index'))
     
-    try:
-        hospital_id_obj = ObjectId(user_id_str)
-        hospital = hospitals.find_one({'_id': hospital_id_obj})
-        if not hospital:
-            flash('Hospital record not found.', 'danger')
-            return redirect(url_for('logout'))
-            
-        registered_doctors = list(doctors.find({'hospital_id': user_id_str}))
-
-        # --- Fetch Records Shared With This Hospital --- 
-        records_cursor = pdf_storage.find({"shared_with": user_id_str})
-        temp_records = list(records_cursor)
-        print(f"Found {len(temp_records)} records potentially shared with hospital {user_id_str}.")
-        
-        # Enrich records with patient names
-        for record in temp_records:
-            try:
-                patient_info = patients.find_one({"_id": record.get('patient_id')}, {"name": 1})
-                record['patient_name'] = patient_info.get('name', 'Unknown Patient') if patient_info else 'Unknown Patient'
-                shared_records.append(record)
-            except Exception as patient_fetch_err:
-                 print(f"Error fetching patient name for record {record.get('_id')}: {patient_fetch_err}")
-                 record['patient_name'] = 'Error Fetching Name'
-                 shared_records.append(record)
-
-    except InvalidId:
-        flash('Invalid Hospital ID format encountered.', 'danger')
-        print(f"Invalid Hospital ID: {user_id_str}")
-        return redirect(url_for('logout'))
-    except Exception as e:
-         flash(f'Error loading hospital dashboard data: {str(e)}', 'danger')
-         print(f"!!! Major Error loading hospital dashboard: {e}")
-         return redirect(url_for('logout'))
-
-    print(f"Rendering template with {len(shared_records)} shared records.")
-    return render_template('hospital_dashboard.html', 
-                           hospital=hospital, 
-                           registered_doctors=registered_doctors,
-                           shared_records=shared_records) # Pass shared_records
+    hospital_id = session['user_id']
+    
+    # Get hospital information
+    hospital = db.hospitals.find_one({"_id": ObjectId(hospital_id)})
+    
+    # Get shared medical records for this hospital
+    shared_records = list(db.shared_files.find({
+        "shared_with_hospital": str(hospital_id)
+    }).sort("shared_date", -1))
+    
+    # Enrich shared records with patient names
+    for record in shared_records:
+        try:
+            patient = db.patients.find_one({"_id": ObjectId(record["patient_id"])})
+            if patient:
+                record["patient_name"] = patient.get("name", "Unknown Patient")
+            else:
+                record["patient_name"] = "Unknown Patient"
+        except Exception as e:
+            record["patient_name"] = "Unknown Patient"
+            app.logger.error(f"Error fetching patient: {str(e)}")
+    
+    # Get a list of all patients who have authorized this hospital
+    patient_ids = list(set(record["patient_id"] for record in shared_records))
+    authorized_patients = list(db.patients.find({
+        "_id": {"$in": [ObjectId(id) for id in patient_ids]}
+    }))
+    
+    return render_template('hospital_dashboard.html',
+                          hospital=hospital,
+                          shared_records=shared_records,
+                          authorized_patients=authorized_patients,
+                          now=datetime.now())
 
 @app.route('/view_patients')
 @login_required
@@ -1284,12 +1256,42 @@ def add_examination(patient_id):
 @patient_required
 def grant_access(patient_id):
     try:
-        user_address = web3.to_checksum_address(request.form['address'])
-        duration = int(request.form['duration'])
-        allowed_fields = request.form.getlist('fields')
+        # Get doctor_id from form
+        doctor_id = request.form.get('doctor_id')
+        if not doctor_id:
+            flash('Please select a doctor', 'danger')
+            return redirect(url_for('patient_dashboard'))
+            
+        # Get doctor's MetaMask address
+        doctor = db.doctors.find_one({"_id": ObjectId(doctor_id)})
+        if not doctor or 'metamask_address' not in doctor:
+            flash('Doctor not found or has no MetaMask address', 'danger')
+            return redirect(url_for('patient_dashboard'))
+            
+        user_address = web3.to_checksum_address(doctor['metamask_address'])
         
-        # FIXED: Corrected parameters to match contract
-        # Contract expects: patientId, grantedTo, duration, allowedFields
+        # Get duration from form
+        duration_days = int(request.form.get('access_duration', 7))
+        duration = duration_days * 24 * 60 * 60  # Convert days to seconds
+        
+        # Get fields access
+        if request.form.get('allow_all_records') == '1':
+            allowed_fields = ["*"]  # All fields
+        else:
+            allowed_fields = request.form.getlist('fields', ["*"])
+        
+        # Update the patient's authorized_doctors list in MongoDB
+        patient = db.patients.find_one({"_id": ObjectId(patient_id)})
+        if patient:
+            authorized_doctors = patient.get("authorized_doctors", [])
+            if doctor_id not in authorized_doctors:
+                authorized_doctors.append(doctor_id)
+                db.patients.update_one(
+                    {"_id": ObjectId(patient_id)},
+                    {"$set": {"authorized_doctors": authorized_doctors}}
+                )
+        
+        # Grant access on blockchain
         account = web3.eth.accounts[0]
         tx_hash = contract.functions.grantAccess(
             patient_id,             # Patient ID (string)
@@ -1299,7 +1301,7 @@ def grant_access(patient_id):
         ).transact({'from': account})
         
         web3.eth.wait_for_transaction_receipt(tx_hash)
-        flash('Access granted successfully', 'success')
+        flash('Access granted successfully to Dr. ' + doctor.get('name', ''), 'success')
     except Exception as e:
         flash(f'Error granting access: {str(e)}', 'danger')
     
@@ -1310,10 +1312,27 @@ def grant_access(patient_id):
 @patient_required
 def revoke_access(patient_id):
     try:
-        user_address = web3.to_checksum_address(request.form['address'])
+        # Get doctor_id from form
+        doctor_id = request.form.get('doctor_id')
+        if not doctor_id:
+            flash('Doctor ID is required', 'danger')
+            return redirect(url_for('patient_dashboard'))
+            
+        # Get doctor's MetaMask address
+        doctor = db.doctors.find_one({"_id": ObjectId(doctor_id)})
+        if not doctor or 'metamask_address' not in doctor:
+            flash('Doctor not found or has no MetaMask address', 'danger')
+            return redirect(url_for('patient_dashboard'))
+            
+        user_address = web3.to_checksum_address(doctor['metamask_address'])
         
-        # FIXED: Corrected parameters to match contract
-        # Contract expects: patientId, grantedTo
+        # Remove doctor from authorized_doctors list in MongoDB
+        db.patients.update_one(
+            {"_id": ObjectId(patient_id)},
+            {"$pull": {"authorized_doctors": doctor_id}}
+        )
+        
+        # Revoke access on blockchain
         account = web3.eth.accounts[0]
         tx_hash = contract.functions.revokeAccess(
             patient_id,   # Patient ID (string)
@@ -1321,7 +1340,7 @@ def revoke_access(patient_id):
         ).transact({'from': account})
         
         web3.eth.wait_for_transaction_receipt(tx_hash)
-        flash('Access revoked successfully', 'success')
+        flash('Access revoked successfully for Dr. ' + doctor.get('name', ''), 'success')
     except Exception as e:
         flash(f'Error revoking access: {str(e)}', 'danger')
     
@@ -2469,56 +2488,126 @@ def medical_image_gallery():
 @app.route('/share_medical_file/<file_id>', methods=['POST'])
 @login_required
 def share_medical_file(file_id):
-    if 'user' not in session:
-        flash('Please log in to share medical files.', 'warning')
-        return redirect(url_for('login'))
-    
-    # Get current user (patient)
-    user_id = session['user']['_id']
-    user = mongo.db.users.find_one({'_id': ObjectId(user_id)})
-    
-    if user['role'] != 'patient':
-        flash('Only patients can share medical files.', 'danger')
-        return redirect(url_for('login'))
-    
-    # Get the doctor ID to share with
-    share_with_id = request.form.get('share_with_id')
-    if not share_with_id or not share_with_id.startswith('doc_'):
-        flash('Please select a doctor to share with.', 'warning')
-        return redirect(url_for('patient_dashboard'))
-    
-    # Extract the doctor's ID (remove 'doc_' prefix)
-    doctor_id = share_with_id[4:]
-    
-    # Get share until date
-    share_until = request.form.get('share_until')
-    if not share_until:
-        # Default to 30 days if not provided
-        share_until = (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d')
-    
     try:
-        # Update the medical file to add sharing information
-        result = mongo.db.medical_files.update_one(
-            {'_id': ObjectId(file_id), 'patient_id': ObjectId(user_id)},
-            {'$push': {
-                'shared_with': {
-                    'doctor_id': ObjectId(doctor_id),
-                    'shared_on': datetime.now(),
-                    'share_until': datetime.strptime(share_until, '%Y-%m-%d'),
-                    'status': 'active'
-                }
-            }}
-        )
+        user_id = session['user_id']
+        user_type = session['user_type']
         
-        if result.modified_count:
-            flash('Medical file shared successfully.', 'success')
-        else:
-            flash('Failed to share the medical file. Please try again.', 'danger')
+        # Get form data
+        share_with_id = request.form.get('share_with_id')
+        share_until = request.form.get('share_until')
+        
+        if not share_with_id:
+            flash('Please select a provider to share with', 'danger')
+            return redirect(url_for('view_medical_file', file_id=file_id))
+        
+        # Verify the file exists and user has permission to share it
+        try:
+            file_obj_id = ObjectId(file_id)
+            file_data = medical_files.find_one({'_id': file_obj_id})
+            
+            if not file_data:
+                flash('File not found', 'danger')
+                return redirect(url_for('dashboard'))
+                
+            # Check if user has permission to share this file
+            # Only the patient who owns the file or the uploader can share it
+            if user_type == 'patient':
+                patient_id = ObjectId(user_id)
+                if file_data.get('patient_id') != patient_id:
+                    flash('You do not have permission to share this file', 'danger')
+                    return redirect(url_for('dashboard'))
+            elif user_type == 'doctor':
+                doctor_id = ObjectId(user_id)
+                if file_data.get('uploader_id') != doctor_id:
+                    flash('You do not have permission to share this file', 'danger')
+                    return redirect(url_for('dashboard'))
+            else:
+                flash('Only patients and doctors can share medical files', 'danger')
+                return redirect(url_for('dashboard'))
+                
+            # Get share_with information
+            share_with_parts = share_with_id.split('_', 1)
+            if len(share_with_parts) != 2:
+                flash('Invalid provider format', 'danger')
+                return redirect(url_for('view_medical_file', file_id=file_id))
+                
+            provider_type = share_with_parts[0]  # 'doc' or 'hosp'
+            provider_id = share_with_parts[1]
+            
+            # Validate the provider exists
+            provider_name = "Provider"
+            if provider_type == 'doc':
+                provider = doctors.find_one({'_id': ObjectId(provider_id)})
+                if provider:
+                    provider_name = f"Dr. {provider.get('name', 'Unknown')}"
+                else:
+                    flash('Selected doctor does not exist', 'danger')
+                    return redirect(url_for('view_medical_file', file_id=file_id))
+            elif provider_type == 'hosp':
+                provider = hospitals.find_one({'_id': ObjectId(provider_id)})
+                if provider:
+                    provider_name = provider.get('name', 'Unknown Hospital')
+                else:
+                    flash('Selected hospital does not exist', 'danger')
+                    return redirect(url_for('view_medical_file', file_id=file_id))
+            else:
+                flash('Invalid provider type', 'danger')
+                return redirect(url_for('view_medical_file', file_id=file_id))
+            
+            # Update the shared_with list in the file document
+            # Initialize shared_with list if it doesn't exist
+            if 'shared_with' not in file_data:
+                file_data['shared_with'] = []
+                
+            # Check if already shared
+            if provider_id in file_data['shared_with']:
+                flash(f'File is already shared with {provider_name}', 'info')
+                return redirect(url_for('view_medical_file', file_id=file_id))
+                
+            # Add to shared_with list
+            medical_files.update_one(
+                {'_id': file_obj_id},
+                {'$addToSet': {'shared_with': provider_id}}
+            )
+            
+            # Also update the sharing_details field to store additional sharing information
+            sharing_details = file_data.get('sharing_details', [])
+            
+            # Add share date information
+            sharing_details.append({
+                'provider_id': provider_id,
+                'provider_type': provider_type,
+                'provider_name': provider_name,
+                'shared_by': user_id,
+                'shared_at': datetime.now(),
+                'share_until': share_until,
+                'status': 'active'
+            })
+            
+            # Update the file with sharing details
+            medical_files.update_one(
+                {'_id': file_obj_id},
+                {'$set': {'sharing_details': sharing_details}}
+            )
+            
+            # Update the patient's authorized_providers field to maintain the connection
+            if user_type == 'patient' and provider_type == 'doc':
+                patients.update_one(
+                    {'_id': patient_id},
+                    {'$addToSet': {'authorized_doctors': provider_id}}
+                )
+            
+            flash(f'Medical file shared successfully with {provider_name}', 'success')
+            return redirect(url_for('view_medical_file', file_id=file_id))
+            
+        except InvalidId:
+            flash('Invalid file ID format', 'danger')
+            return redirect(url_for('dashboard'))
+            
     except Exception as e:
-        print(f"Error sharing medical file: {e}")
-        flash('An error occurred while sharing the file.', 'danger')
-    
-    return redirect(url_for('patient_dashboard'))
+        flash(f'Error sharing medical file: {str(e)}', 'danger')
+        print(f"Error in share_medical_file: {e}")
+        return redirect(url_for('view_medical_file', file_id=file_id))
 
 if __name__ == '__main__':
     # Initialize blockchain if empty
