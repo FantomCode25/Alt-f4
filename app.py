@@ -5,7 +5,7 @@ from functools import wraps
 import json
 from web3 import Web3
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from cryptography.fernet import Fernet
 import base64
 from cryptography.hazmat.primitives import serialization
@@ -24,14 +24,26 @@ import google.generativeai as genai
 import requests
 from io import BytesIO
 from dotenv import load_dotenv
+from flask import send_from_directory  # Add this import for serving files
 
 # For fallback OCR
 try:
     import pytesseract
     from PIL import Image
     TESSERACT_AVAILABLE = True
-    # Set tesseract path if needed (Windows example)
-    # pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+    # Set tesseract path for Windows
+    if os.name == 'nt':  # Windows
+        pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+        # Try alternative locations if the standard location doesn't work
+        if not os.path.exists(pytesseract.pytesseract.tesseract_cmd):
+            potential_paths = [
+                r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe',
+                r'C:\Tesseract-OCR\tesseract.exe'
+            ]
+            for path in potential_paths:
+                if os.path.exists(path):
+                    pytesseract.pytesseract.tesseract_cmd = path
+                    break
 except ImportError:
     TESSERACT_AVAILABLE = False
     print("Warning: pytesseract not available for fallback OCR")
@@ -288,7 +300,7 @@ def fallback_ocr_with_tesseract(file_path):
     Use Tesseract OCR as a fallback when the OCR.space API fails
     """
     if not TESSERACT_AVAILABLE:
-        return "Tesseract OCR not available for fallback processing"
+        return "Tesseract OCR not available for fallback processing. Please install pytesseract and Tesseract OCR."
     
     try:
         # Get file extension
@@ -297,20 +309,44 @@ def fallback_ocr_with_tesseract(file_path):
         # Process based on file type
         if file_extension in ['.jpg', '.jpeg', '.png', '.bmp', '.gif']:
             # For image files
-            image = Image.open(file_path)
-            
-            # Convert to RGB if needed (to handle PNG with transparency)
-            if image.mode != 'RGB':
-                image = image.convert('RGB')
+            try:
+                image = Image.open(file_path)
                 
-            # Use pytesseract to extract text
-            text = pytesseract.image_to_string(image, lang='eng')
-            
-            if not text.strip():
-                return "No text found in image using local OCR"
+                # Convert to RGB if needed (to handle PNG with transparency)
+                if image.mode != 'RGB':
+                    image = image.convert('RGB')
                 
-            return f"[Extracted using local OCR]\n{text}"
+                # Image preprocessing for better OCR results
+                # 1. Resize image if too large (maintains aspect ratio)
+                max_size = 3000  # Maximum dimension
+                if max(image.size) > max_size:
+                    ratio = max_size / max(image.size)
+                    new_size = (int(image.size[0] * ratio), int(image.size[1] * ratio))
+                    image = image.resize(new_size, Image.Resampling.LANCZOS)
+                
+                # 2. Apply additional preprocessing if needed
+                # For example, we could enhance contrast or apply thresholding for better results
+                
+                # Use pytesseract with optimized configuration for medical text
+                custom_config = r'--oem 3 --psm 6 -l eng'  # OCR Engine Mode 3, Page Segmentation Mode 6 (assumes a single uniform block of text)
+                text = pytesseract.image_to_string(image, config=custom_config)
+                
+                # Check if we got any text
+                if not text.strip():
+                    # Try again with different parameters if first attempt failed
+                    print("First OCR attempt failed, trying with different parameters...")
+                    custom_config = r'--oem 3 --psm 4 -l eng'  # PSM 4 (assumes a single column of text of variable sizes)
+                    text = pytesseract.image_to_string(image, config=custom_config)
+                
+                if not text.strip():
+                    return "No text found in image. The image may not contain readable text or the text might be in an unsupported format/language."
+                
+                return f"[Extracted using local OCR]\n{text}"
             
+            except Exception as img_err:
+                print(f"Error processing image: {img_err}")
+                return f"Error processing image for OCR: {str(img_err)}"
+                
         elif file_extension == '.pdf':
             # For PDF files, extract using PyPDF2 first
             pdf_text = extract_pdf_text(file_path)
@@ -329,16 +365,28 @@ def fallback_ocr_with_tesseract(file_path):
                 
                 # Process each page
                 for i, image in enumerate(images):
-                    page_text = pytesseract.image_to_string(image, lang='eng')
+                    # Apply same preprocessing as for regular images
+                    if image.mode != 'RGB':
+                        image = image.convert('RGB')
+                    
+                    # Use optimized configuration
+                    custom_config = r'--oem 3 --psm 6 -l eng'
+                    page_text = pytesseract.image_to_string(image, config=custom_config)
+                    
+                    # If no text found, try different parameters
+                    if not page_text.strip():
+                        custom_config = r'--oem 3 --psm 4 -l eng'
+                        page_text = pytesseract.image_to_string(image, config=custom_config)
+                    
                     text += f"--- Page {i+1} ---\n{page_text}\n\n"
                 
                 if not text.strip():
-                    return "No text found in PDF using local OCR"
+                    return "No text found in PDF using local OCR. The PDF may contain images without readable text."
                     
                 return f"[Extracted using local PDF OCR]\n{text}"
                 
             except ImportError:
-                return "PDF conversion library not available for local OCR of PDF files"
+                return "PDF conversion library not available for local OCR of PDF files. Please install pdf2image."
         else:
             return f"Unsupported file type for local OCR: {file_extension}"
             
@@ -943,22 +991,44 @@ def doctor_dashboard():
             'patient_id': {'$in': patient_ids}
         }).sort('date', -1))
         
-        # Get recent file uploads where this doctor is the uploader or has access to the patient
-        recent_uploads = list(medical_files.find({
+        # Find medical files shared with this doctor
+        shared_files_query = {
             '$or': [
-                {'uploader_id': doctor_id},
-                {'patient_id': {'$in': patient_ids}}
+                {'uploader_id': doctor_id},  # Files uploaded by this doctor
+                {'shared_with': {'$in': [doctor_id_str]}},  # Files explicitly shared with this doctor
+                {'patient_id': {'$in': patient_ids}}  # Files of patients who authorized this doctor
             ]
-        }).sort('upload_date', -1).limit(5))
+        }
+        
+        recent_uploads = list(medical_files.find(shared_files_query).sort('upload_date', -1).limit(20))
+        
+        # Enrich the data with patient names
+        patient_map = {str(patient['_id']): patient['name'] for patient in patient_list}
+        for file in recent_uploads:
+            patient_id = file.get('patient_id')
+            if patient_id:
+                patient_id_str = str(patient_id)
+                if patient_id_str in patient_map:
+                    file['patient_name'] = patient_map[patient_id_str]
+                else:
+                    # If patient not in our map, fetch their name
+                    try:
+                        patient = patients.find_one({'_id': patient_id}, {'name': 1})
+                        file['patient_name'] = patient['name'] if patient else 'Unknown Patient'
+                        # Update our map for future lookups
+                        patient_map[patient_id_str] = file['patient_name']
+                    except Exception as e:
+                        print(f"Error fetching patient name for file {file.get('_id')}: {e}")
+                        file['patient_name'] = 'Unknown Patient'
     else:
         record_list = []
         recent_uploads = []
         
-        return render_template('doctor_dashboard.html', 
-                             doctor=doctor,
-                       patients=patient_list, 
-                       records=record_list,
-                       recent_uploads=recent_uploads)
+    return render_template('doctor_dashboard.html', 
+                          doctor=doctor,
+                          patients=patient_list, 
+                          records=record_list,
+                          recent_uploads=recent_uploads)
 
 # --- Dedicated Patient Dashboard Route --- 
 @app.route('/patient_dashboard')
@@ -2212,6 +2282,29 @@ def view_medical_file(file_id):
                     'name': 'Unknown Uploader',
                     'type': uploader_type
                 }
+        
+        # Get available doctors and hospitals for sharing
+        available_doctors = []
+        available_hospitals = []
+        
+        # If the current user is the patient or the uploader, they can share
+        can_share = (str(file_data.get('patient_id', '')) == user_id or 
+                    str(file_data.get('uploader_id', '')) == user_id)
+                    
+        if can_share:
+            try:
+                # Get all doctors
+                available_doctors = list(doctors.find({}, {'_id': 1, 'name': 1, 'specialization': 1}))
+                
+                # Get all hospitals
+                available_hospitals = list(hospitals.find({}, {'_id': 1, 'name': 1}))
+                
+                # Filter out already shared providers
+                if shared_with_ids:
+                    available_doctors = [doc for doc in available_doctors if str(doc['_id']) not in shared_with_ids]
+                    available_hospitals = [hosp for hosp in available_hospitals if str(hosp['_id']) not in shared_with_ids]
+            except Exception as e:
+                print(f"Error fetching providers for sharing: {e}")
             
         return render_template(
             'view_medical_file.html',
@@ -2222,13 +2315,210 @@ def view_medical_file(file_id):
             summary_text=ai_summary,
             processing_status=processing_status,
             shared_with_details=shared_with_details,
-            uploader_details=uploader_details
+            uploader_details=uploader_details,
+            available_doctors=available_doctors,
+            available_hospitals=available_hospitals,
+            can_share=can_share
         )
             
     except Exception as e:
         print(f"Error in view_medical_file: {e}")
         flash(f'Error viewing file: {str(e)}', 'danger')
         return redirect(url_for('dashboard'))
+
+# Serve uploaded files
+@app.route('/uploads/<filename>')
+@login_required
+def uploaded_file(filename):
+    """
+    Serve uploaded files from the uploads directory
+    """
+    # Get the full path to the uploads directory
+    upload_dir = os.path.join(app.root_path, 'uploads')
+    # Use Flask's send_from_directory function to serve the file
+    return send_from_directory(upload_dir, filename)
+
+# Add a dedicated route for image gallery viewing
+@app.route('/view_image/<file_id>')
+@login_required
+def view_image(file_id):
+    """
+    Dedicated route for viewing medical images in fullscreen
+    """
+    try:
+        file_obj_id = ObjectId(file_id)
+        file_data = medical_files.find_one({'_id': file_obj_id})
+        
+        if not file_data:
+            flash('File not found', 'danger')
+            return redirect(url_for('dashboard'))
+            
+        # Check if file is an image
+        file_extension = file_data.get('file_extension', '').lower()
+        if file_extension not in ['jpg', 'jpeg', 'png', 'gif', 'bmp']:
+            flash('This file is not an image', 'warning')
+            return redirect(url_for('view_medical_file', file_id=file_id))
+            
+        # Check access permission (same logic as in view_medical_file)
+        user_id = session['user_id']
+        user_type = session['user_type']
+        
+        # Allow access to uploader, patient who owns the file, or shared users
+        has_access = (
+            str(file_data['uploader_id']) == user_id or
+            str(file_data['patient_id']) == user_id or
+            user_id in file_data.get('shared_with', [])
+        )
+        
+        if not has_access:
+            # Check blockchain-based access
+            try:
+                patient_id_str = str(file_data['patient_id'])
+                
+                if user_type == 'doctor':
+                    doctor = doctors.find_one({'_id': ObjectId(user_id)}, {'metamask_address': 1})
+                    if doctor and 'metamask_address' in doctor:
+                        doctor_address = doctor['metamask_address']
+                        has_access = contract.functions.checkAccess(
+                            patient_id_str,
+                            doctor_address
+                        ).call()
+                elif user_type == 'hospital':
+                    hospital = hospitals.find_one({'_id': ObjectId(user_id)}, {'metamask_address': 1})
+                    if hospital and 'metamask_address' in hospital:
+                        hospital_address = hospital['metamask_address']
+                        has_access = contract.functions.checkAccess(
+                            patient_id_str,
+                            hospital_address
+                        ).call()
+            except Exception as e:
+                print(f"Error checking blockchain access: {e}")
+                has_access = False
+        
+        if not has_access:
+            flash('You do not have permission to view this file', 'danger')
+            return redirect(url_for('dashboard'))
+
+        return render_template('view_image.html', 
+                              file=file_data, 
+                              filename=file_data.get('filename', ''))
+                              
+    except InvalidId:
+        flash('Invalid file ID format', 'danger')
+        return redirect(url_for('dashboard'))
+    except Exception as e:
+        flash(f'Error viewing image: {str(e)}', 'danger')
+        return redirect(url_for('dashboard'))
+
+# Add a route for the image gallery
+@app.route('/medical_images')
+@login_required
+def medical_image_gallery():
+    """
+    Display a gallery of medical images for the current user
+    """
+    try:
+        user_id = session['user_id']
+        user_type = session['user_type']
+        
+        # Different queries based on user type
+        if user_type == 'patient':
+            # Patients see their own images
+            patient_id = ObjectId(user_id)
+            query = {
+                'patient_id': patient_id,
+                'file_extension': {'$in': ['jpg', 'jpeg', 'png', 'gif', 'bmp']}
+            }
+        elif user_type == 'doctor':
+            # Doctors see images from patients they have access to
+            doctor_id = ObjectId(user_id)
+            doctor = doctors.find_one({'_id': doctor_id})
+            
+            # Get patients that this doctor has access to
+            patient_list = list(patients.find({'authorized_doctors': user_id}))
+            patient_ids = [patient['_id'] for patient in patient_list]
+            
+            # Find images from those patients or uploaded by this doctor
+            query = {
+                '$or': [
+                    {'patient_id': {'$in': patient_ids}},
+                    {'uploader_id': doctor_id}
+                ],
+                'file_extension': {'$in': ['jpg', 'jpeg', 'png', 'gif', 'bmp']}
+            }
+        elif user_type == 'hospital':
+            # Hospitals see images shared with them
+            hospital_id = ObjectId(user_id)
+            query = {
+                'shared_with': user_id,
+                'file_extension': {'$in': ['jpg', 'jpeg', 'png', 'gif', 'bmp']}
+            }
+        else:
+            flash('Unknown user type', 'danger')
+            return redirect(url_for('dashboard'))
+        
+        # Get images from the database
+        image_files = list(medical_files.find(query).sort('upload_date', -1))
+        
+        return render_template('view_image_gallery.html', files=image_files)
+    
+    except Exception as e:
+        flash(f'Error loading medical images: {str(e)}', 'danger')
+        return redirect(url_for('dashboard'))
+
+@app.route('/share_medical_file/<file_id>', methods=['POST'])
+@login_required
+def share_medical_file(file_id):
+    if 'user' not in session:
+        flash('Please log in to share medical files.', 'warning')
+        return redirect(url_for('login'))
+    
+    # Get current user (patient)
+    user_id = session['user']['_id']
+    user = mongo.db.users.find_one({'_id': ObjectId(user_id)})
+    
+    if user['role'] != 'patient':
+        flash('Only patients can share medical files.', 'danger')
+        return redirect(url_for('login'))
+    
+    # Get the doctor ID to share with
+    share_with_id = request.form.get('share_with_id')
+    if not share_with_id or not share_with_id.startswith('doc_'):
+        flash('Please select a doctor to share with.', 'warning')
+        return redirect(url_for('patient_dashboard'))
+    
+    # Extract the doctor's ID (remove 'doc_' prefix)
+    doctor_id = share_with_id[4:]
+    
+    # Get share until date
+    share_until = request.form.get('share_until')
+    if not share_until:
+        # Default to 30 days if not provided
+        share_until = (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d')
+    
+    try:
+        # Update the medical file to add sharing information
+        result = mongo.db.medical_files.update_one(
+            {'_id': ObjectId(file_id), 'patient_id': ObjectId(user_id)},
+            {'$push': {
+                'shared_with': {
+                    'doctor_id': ObjectId(doctor_id),
+                    'shared_on': datetime.now(),
+                    'share_until': datetime.strptime(share_until, '%Y-%m-%d'),
+                    'status': 'active'
+                }
+            }}
+        )
+        
+        if result.modified_count:
+            flash('Medical file shared successfully.', 'success')
+        else:
+            flash('Failed to share the medical file. Please try again.', 'danger')
+    except Exception as e:
+        print(f"Error sharing medical file: {e}")
+        flash('An error occurred while sharing the file.', 'danger')
+    
+    return redirect(url_for('patient_dashboard'))
 
 if __name__ == '__main__':
     # Initialize blockchain if empty
