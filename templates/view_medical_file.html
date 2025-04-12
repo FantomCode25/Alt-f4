@@ -2,6 +2,26 @@
 
 {% block title %}View Medical Document - HealthChain{% endblock %}
 
+{% block styles %}
+<style>
+    .table-th-width {
+        width: 35%;
+    }
+    .text-pre-wrap {
+        white-space: pre-wrap;
+        font-family: inherit;
+    }
+    .text-scroll-container {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .image-preview {
+        max-height: 400px;
+        cursor: zoom-in;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <div class="row">
@@ -26,7 +46,7 @@
                             <h5>Document Information</h5>
                             <table class="table table-sm">
                                 <tr>
-                                    <th style="width: 35%">Document ID:</th>
+                                    <th class="table-th-width">Document ID:</th>
                                     <td><code>{{ file.doc_id }}</code></td>
                                 </tr>
                                 <tr>
@@ -55,7 +75,7 @@
                             <h5>Blockchain Information</h5>
                             <table class="table table-sm">
                                 <tr>
-                                    <th style="width: 35%">Block Hash:</th>
+                                    <th class="table-th-width">Block Hash:</th>
                                     <td><code class="small">{{ file.blockchain_hash }}</code></td>
                                 </tr>
                                 <tr>
@@ -122,8 +142,8 @@
                             </div>
                             
                             {% if file_info.ocr_success %}
-                                <div class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;">
-                                    <pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">{{ display_text }}</pre>
+                                <div class="bg-light p-3 rounded text-scroll-container">
+                                    <pre class="text-pre-wrap mb-0">{{ display_text }}</pre>
                                 </div>
                             {% else %}
                                 <div class="alert alert-warning">
@@ -167,7 +187,7 @@
                                             <p class="mb-0">{{ summary_text }}</p>
                                             {% if 'Google Generative API needs to be activated' in summary_text %}
                                                 <div class="mt-2">
-                                                    <a href="https://console.developers.google.com/apis/api/generativelanguage.googleapis.com/overview" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                    <a href="https://console.developers.google.com/apis/api/generativelanguage.googleapis.com/overview" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener noreferrer">
                                                         <i class="fas fa-external-link-alt me-1"></i> Activate API
                                                     </a>
                                                 </div>
@@ -190,7 +210,7 @@
                             </div>
                             <div class="text-center">
                                 <a href="{{ url_for('view_image', file_id=file._id) }}" class="image-preview-link" rel="noopener">
-                                    <img src="{{ url_for('uploaded_file', filename=file.filename) }}" class="img-fluid rounded shadow-sm" alt="Medical Image" style="max-height: 400px; cursor: zoom-in;">
+                                    <img src="{{ url_for('uploaded_file', filename=file.filename) }}" class="img-fluid rounded shadow-sm image-preview" alt="Medical Image">
                                 </a>
                                 <p class="text-muted mt-2">
                                     <small><i class="fas fa-info-circle me-1"></i> Click on the image to view in fullscreen with zoom and rotation controls</small>

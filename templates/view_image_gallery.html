@@ -27,11 +27,10 @@
                             {% for file in files %}
                                 <div class="col">
                                     <div class="card h-100 border-0 shadow-sm hover-shadow">
-                                        <div class="card-img-container" style="height: 200px; overflow: hidden; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                                        <div class="card-img-container">
                                             <a href="{{ url_for('view_image', file_id=file._id) }}" class="text-decoration-none">
                                                 <img src="{{ url_for('uploaded_file', filename=file.filename) }}" 
-                                                     class="card-img-top" alt="Medical Image"
-                                                     style="max-height: 200px; width: auto; object-fit: contain;">
+                                                     class="card-img-top gallery-image" alt="Medical Image">
                                             </a>
                                         </div>
                                         <div class="card-body">
@@ -83,10 +82,22 @@
     
     .card-img-container {
         transition: all 0.3s ease;
+        height: 200px; 
+        overflow: hidden; 
+        background-color: #f8f9fa; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
     }
     
     .hover-shadow:hover .card-img-container {
         background-color: #e9ecef;
+    }
+    
+    .gallery-image {
+        max-height: 200px; 
+        width: auto; 
+        object-fit: contain;
     }
 </style>
 {% endblock %} 

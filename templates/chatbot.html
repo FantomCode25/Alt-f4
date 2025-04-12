@@ -32,7 +32,8 @@ body {
     background-color: rgba(255, 255, 255, 0.95); 
     border-radius: 20px; 
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); 
-    backdrop-filter: blur(10px); 
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px); 
 }
 
 #header { 
@@ -643,125 +644,4 @@ function generateExercisePlan(answers) {
     let plan = `🎯 Your Personalized Exercise Plan:\n\n`;
     plan += `Goal: ${goal}\n`;
     plan += `Time Available: ${timeAvailable} minutes/day\n`;
-    plan += `Preferred Setting: ${workoutType} workouts\n\n`;
-    
-    // Goal-specific recommendations
-    if (goal.includes('weight management')) {
-        plan += `📋 Recommended Routine:\n`;
-        plan += `- 10 mins warm-up\n`;
-        plan += `- 20-30 mins cardio (jumping jacks, high knees, burpees)\n`;
-        plan += `- 15-20 mins strength training\n`;
-        plan += `- 5 mins cool-down\n\n`;
-        plan += `🎯 Target Heart Rate: 60-70% of max\n`;
-    }
-    
-    // Home-specific exercises
-    plan += `💪 Exercise Examples:\n`;
-    plan += `- Bodyweight squats: 3 sets x 15 reps\n`;
-    plan += `- Push-ups: 3 sets x 10 reps\n`;
-    plan += `- Planks: 3 sets x 30 seconds\n`;
-    plan += `- Mountain climbers: 3 sets x 30 seconds\n`;
-    plan += `- Lunges: 3 sets x 12 reps per leg\n`;
-    
-    plan += `\n📝 Weekly Schedule:\n`;
-    plan += `- Exercise: 4-5 days/week\n`;
-    plan += `- Rest: 2-3 days/week\n`;
-    plan += `- Gradually increase intensity\n`;
-    
-    return plan;
-}
-
-// Update sendMessage function
-function sendMessage() {
-    let userInput = document.getElementById("input-field").value.trim();
-    if (!userInput) return;
-
-    displayMessage(userInput, "user");
-    document.getElementById("input-field").value = "";
-
-    const response = handlePredefinedResponse(userInput);
-    if (response) {
-        displayMessage(response, "bot");
-        saveChatHistory(userInput, response);
-        return;
-    }
-
-    fetch(API_URL, {
-        method: "POST",
-        headers: { 
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            contents: [{
-                parts: [{
-                    text: userInput
-                }]
-            }],
-            generationConfig: {
-                temperature: 0.9,
-                topK: 1,
-                topP: 1
-            }
-        })
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => {
-                console.error('API Error:', err);
-                throw new Error(err.error?.message || 'API request failed');
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        let botReply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "I couldn't understand that. Could you rephrase?";
-        displayMessage(botReply, "bot");
-        saveChatHistory(userInput, botReply);
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        displayMessage("I'm having trouble connecting. Please try using predefined commands like 'help'.", "bot");
-        saveChatHistory(userInput, "API error");
-    });
-}
-
-document.addEventListener("DOMContentLoaded", () => loadChatHistory());
-
-document.getElementById("input-form").addEventListener("submit", function(event) {
-
-event.preventDefault();
-
-sendMessage();
-
-});
-
-function saveChatHistory(userMessage, botReply) {
-
-let history = JSON.parse(localStorage.getItem("chatHistory")) || [];
-
-history.push({ sender: "user", message: userMessage });
-
-history.push({ sender: "bot", message: botReply });
-
-localStorage.setItem("chatHistory", JSON.stringify(history));
-
-}
-
-function loadChatHistory() {
-    // Clear existing chat history from localStorage
-    localStorage.removeItem("chatHistory");
-    
-    // Clear the conversation div except for the initial greeting
-    const conversation = document.getElementById("conversation");
-    conversation.innerHTML = `
-        <div class="chatbot-message chatbot">
-            <p>Hi! I'm your AI assistant 👋 How can I help?</p>
-        </div>
-    `;
-}
-
-</script>
-
-</body>
-
-</html>
+    plan += `

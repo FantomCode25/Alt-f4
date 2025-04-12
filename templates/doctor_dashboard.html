@@ -248,11 +248,11 @@
                             <td>{{ file.upload_date|formatdatetime('date_only') }}</td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{{ url_for('view_medical_file', file_id=file._id) }}" class="btn btn-sm btn-primary">
+                                    <a href="{{ url_for('view_medical_file', file_id=file._id) }}" class="btn btn-sm btn-primary" aria-label="View medical file details">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     {% if file.file_extension and file.file_extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp'] %}
-                                    <a href="{{ url_for('view_image', file_id=file._id) }}" class="btn btn-sm btn-info" title="View Image">
+                                    <a href="{{ url_for('view_image', file_id=file._id) }}" class="btn btn-sm btn-info" title="View Image" aria-label="View full-size image">
                                         <i class="fas fa-search-plus"></i>
                                     </a>
                                     {% endif %}

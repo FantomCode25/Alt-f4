@@ -2,6 +2,11 @@
 
 {% block title %}Doctor Login - HealthChain{% endblock %}
 
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
@@ -43,7 +48,7 @@
                         </div>
                         
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn" style="background-color: #006400; border-color: #006400; color: white;">
+                            <button type="submit" class="btn btn-doctor-login">
                                 <i class="fas fa-sign-in-alt me-2"></i>Login to Doctor Portal
                             </button>
                             <a href="{{ url_for('register_doctor') }}" class="btn btn-outline-success">
@@ -101,6 +106,7 @@
                                     <div class="card-body">
                                         <form id="uploadForm" enctype="multipart/form-data">
                                             <div class="mb-3">
+                                                <label for="fileInput" class="form-label">Select file to upload</label>
                                                 <input type="file" id="fileInput" name="file" class="form-control" accept=".pdf,.jpg,.png,.doc,.docx" required>
                                                 <small class="form-text text-muted">Accepted formats: PDF, JPG, PNG, DOC, DOCX. Maximum file size: 10MB. All files will be encrypted and stored securely. Only authorized healthcare providers will have access to these files.</small>
                                             </div>
