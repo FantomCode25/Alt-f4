@@ -1,0 +1,35 @@
+/* Main styles for HealthChain application */
+
+/* Doctor portal button style */
+.btn-doctor-login {
+    background-color: #006400; 
+    border-color: #006400; 
+    color: white;
+}
+
+/* Inline styles from templates/index.html */
+.hero-background {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/static/img/medical-bg.jpg');
+    background-size: cover;
+    background-position: center;
+    min-height: 600px;
+}
+
+.font-weight-bold {
+    font-weight: bold;
+}
+
+/* Fix for spacing issues in list elements */
+ul, ol {
+    padding-left: 2rem;
+}
+
+ul li, ol li {
+    margin-bottom: 0.5rem;
+}
+
+/* Safari support for backdrop filter */
+.blur-bg {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+} 

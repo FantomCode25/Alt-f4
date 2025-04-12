@@ -337,6 +337,13 @@
                             </a>
                         </li>
                         
+                        <!-- Add Chatbot Link for logged-in users -->
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'chatbot' %}active{% endif %}" href="{{ url_for('chatbot') }}">
+                                <i class="fas fa-robot me-1"></i> AI Assistant
+                            </a>
+                        </li>
+                        
                         {% if session.user_type == 'patient' %}
                             <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint == 'upload_medical_file' %}active{% endif %}" href="{{ url_for('upload_medical_file') }}">
@@ -371,6 +378,11 @@
                         <li class="nav-item">
                             <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">
                                 <i class="fas fa-home me-1"></i> Home
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'chatbot' %}active{% endif %}" href="{{ url_for('chatbot') }}">
+                                <i class="fas fa-robot me-1"></i> AI Assistant
                             </a>
                         </li>
                         <li class="nav-item">

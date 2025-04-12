@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" class="light">
 
 <head>
 
@@ -8,143 +8,397 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>HealthMate AI</title>
+<title>Health Records AI Chatbot</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 
 <style>
 
+/* Base Styles */
 * { 
     box-sizing: border-box; 
     margin: 0; 
     padding: 0; 
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+    font-family: 'Poppins', Arial, sans-serif; 
+}
+
+/* Light/Dark Mode Transition */
+html.light, html.dark, body, .chatbot-container, #header, #conversation, 
+.chatbot-message, #input-form, #input-field, #submit-button, #mic-button {
+    transition: all 0.3s ease;
 }
 
 body { 
     display: flex; 
     justify-content: center; 
     align-items: center; 
-    min-height: 100vh; 
-    background: linear-gradient(135deg, #6e8efb, #a777e3); 
+    height: 100vh; 
+    background-color: #2d3748; 
+    background-image: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+}
+
+/* Dark mode color changes */
+html.dark body {
+    background-color: #1a202c;
+    background-image: linear-gradient(135deg, #1a202c 0%, #0f1624 100%);
 }
 
 .chatbot-container { 
-    width: 380px; 
-    background-color: rgba(255, 255, 255, 0.95); 
-    border-radius: 20px; 
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); 
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px); 
+    width: 420px; 
+    background-color: #fff; 
+    border-radius: 16px; 
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08); 
+    overflow: hidden; 
+    position: relative;
+    transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Fullscreen mode */
+.chatbot-container.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    z-index: 1000;
+    max-width: none;
+}
+
+.chatbot-container.fullscreen #conversation {
+    height: calc(100vh - 137px);
+}
+
+html.dark .chatbot-container {
+    background-color: #353a50;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
 #header { 
-    background: linear-gradient(135deg, #4a90e2, #7b68ee); 
+    background: linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%);
     color: white; 
-    padding: 20px; 
-    border-radius: 20px 20px 0 0; 
-    text-align: center; 
-    font-size: 1.2em; 
+    padding: 18px 20px; 
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.4em;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#header h1 {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    font-size: 1.3em;
+}
+
+#header h1::before {
+    content: "";
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background-color: #ffffff;
+    border-radius: 50%;
+    margin-right: 10px;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+    70% { box-shadow: 0 0 0 6px rgba(255, 255, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#theme-toggle, #expand-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    transition: all 0.2s ease;
+}
+
+#theme-toggle:hover, #expand-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.theme-icon, .expand-icon {
+    width: 20px;
+    height: 20px;
 }
 
 #conversation { 
-    height: 450px; 
+    height: 440px; 
     overflow-y: auto; 
-    padding: 20px; 
+    padding: 16px; 
     display: flex; 
     flex-direction: column; 
-    gap: 15px; 
+    gap: 16px; 
+    background-color: #fafbff;
+}
+
+html.dark #conversation {
+    background-color: #353a50;
 }
 
 .chatbot-message { 
-    max-width: 80%; 
-    padding: 12px 16px; 
+    max-width: 75%; 
+    padding: 14px 18px; 
     border-radius: 18px; 
     font-size: 15px; 
-    line-height: 1.4; 
-    animation: fade-in 0.3s ease-out; 
+    line-height: 1.5; 
+    animation: fade-in 0.3s ease-in-out;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
 }
 
 .user-message { 
     align-self: flex-end; 
-    background: linear-gradient(135deg, #4a90e2, #7b68ee); 
-    color: white; 
+    background: linear-gradient(135deg, #c4b5fd 0%, #a78bfa 100%);
+    color: #fff; 
     border-radius: 18px 18px 0 18px; 
 }
 
 .chatbot { 
     align-self: flex-start; 
-    background: linear-gradient(135deg, #ff6b6b, #ff8e8e); 
-    color: white; 
+    background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%);
+    color: #fff; 
     border-radius: 18px 18px 18px 0; 
 }
 
 @keyframes fade-in { 
-    from { 
-        opacity: 0; 
-        transform: translateY(10px); 
-    } 
-    to { 
-        opacity: 1; 
-        transform: translateY(0); 
-    } 
+    from { opacity: 0; transform: translateY(-10px); } 
+    to { opacity: 1; transform: translateY(0); } 
 }
 
 #input-form { 
     display: flex; 
-    padding: 15px; 
-    border-top: 1px solid rgba(0, 0, 0, 0.1); 
-    background: rgba(255, 255, 255, 0.95); 
-    border-radius: 0 0 20px 20px; 
+    padding: 16px; 
+    border-top: 1px solid rgba(0, 0, 0, 0.03); 
+    background: #fff; 
+}
+
+html.dark #input-form {
+    background: #353a50;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 #input-field { 
     flex: 1; 
-    height: 46px; 
-    border: 2px solid #e0e0e0; 
-    padding: 0 15px; 
-    font-size: 15px; 
-    border-radius: 23px; 
-    background: white; 
-    color: #333; 
-    transition: border-color 0.3s ease; 
+    height: 48px; 
+    border: none; 
+    padding: 0 16px; 
+    font-size: 16px; 
+    border-radius: 12px; 
+    background: #f3f4ff; 
+    color: #4b5563; 
+    outline: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03) inset;
 }
 
-#input-field:focus { 
-    border-color: #4a90e2; 
-    outline: none; 
+html.dark #input-field {
+    background: #404663;
+    color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) inset;
 }
 
 #submit-button { 
-    background: linear-gradient(135deg, #4a90e2, #7b68ee); 
+    background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
     border: none; 
     color: white; 
-    padding: 12px 24px; 
-    margin-left: 10px; 
-    border-radius: 23px; 
+    padding: 12px 20px; 
+    margin-left: 12px; 
+    border-radius: 12px; 
     cursor: pointer; 
-    font-size: 15px; 
-    transition: transform 0.2s ease; 
+    font-size: 16px;
+    font-weight: 500;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
 }
 
 #submit-button:hover { 
-    transform: scale(1.05); 
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Voice Input Button */
+#mic-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 48px;
+    height: 48px;
+    background-color: #f3f4ff;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    margin-right: 12px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+}
+
+html.dark #mic-button {
+    background-color: #404663;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+#mic-button:hover {
+    background-color: #e9eaff;
+    transform: translateY(-2px);
+}
+
+html.dark #mic-button:hover {
+    background-color: #4a5173;
+}
+
+.mic-icon {
+    width: 20px;
+    height: 20px;
+    color: #8b5cf6;
+}
+
+html.dark .mic-icon {
+    color: #a78bfa;
+}
+
+/* Voice Wave Animation */
+.voice-wave {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.wave-bar {
+    width: 3px;
+    height: 8px;
+    margin: 0 1px;
+    background-color: #8b5cf6;
+    border-radius: 1px;
+    animation: none;
+}
+
+html.dark .wave-bar {
+    background-color: #a78bfa;
+}
+
+.active-recording .wave-bar {
+    animation: voice-wave 0.5s infinite alternate;
+}
+
+.wave-bar:nth-child(1) { animation-delay: -0.4s; }
+.wave-bar:nth-child(2) { animation-delay: -0.3s; }
+.wave-bar:nth-child(3) { animation-delay: -0.2s; }
+.wave-bar:nth-child(4) { animation-delay: -0.1s; }
+.wave-bar:nth-child(5) { animation-delay: 0s; }
+
+@keyframes voice-wave {
+    0% { height: 4px; }
+    100% { height: 16px; }
+}
+
+/* Scrollbar Styling */
 ::-webkit-scrollbar { 
-    width: 8px; 
-}
-
-::-webkit-scrollbar-track { 
-    background: rgba(0, 0, 0, 0.05); 
-    border-radius: 4px; 
+    width: 6px; 
 }
 
 ::-webkit-scrollbar-thumb { 
-    background: rgba(0, 0, 0, 0.2); 
-    border-radius: 4px; 
+    background: #d1d5ff; 
+    border-radius: 6px; 
 }
 
-::-webkit-scrollbar-thumb:hover { 
-    background: rgba(0, 0, 0, 0.3); 
+html.dark ::-webkit-scrollbar-thumb {
+    background: #4a5173;
+}
+
+/* Typing Indicator */
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+}
+
+.typing-indicator span {
+    width: 6px;
+    height: 6px;
+    margin: 0 2px;
+    background-color: #fff;
+    border-radius: 50%;
+    animation: typing 1s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+.timestamp {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    text-align: right;
+    margin-top: 4px;
+}
+
+/* Quick Options Styling */
+.quick-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+    margin-bottom: 8px;
+}
+
+.option-button {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 14px;
+    text-align: left;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+}
+
+.option-button:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: translateX(5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.option-button::before {
+    content: "→";
+    margin-right: 8px;
+    font-weight: bold;
+    transition: transform 0.3s ease;
+}
+
+.option-button:hover::before {
+    transform: translateX(3px);
 }
 </style>
 
@@ -155,14 +409,64 @@ body {
 <div class="chatbot-container">
 
 <div id="header">
-    <h1> HealthMate AI</h1>
+    <h1>HealthBot</h1>
+    <div class="header-controls">
+        <a href="{{ url_for('index') }}" class="btn btn-link text-white p-0 me-2" style="text-decoration: none;" title="Back to main app">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+            </svg>
+        </a>
+        <button id="expand-toggle" aria-label="Expand chat">
+            <svg class="expand-icon" id="expand-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 3h6v6"></path>
+                <path d="M9 21H3v-6"></path>
+                <path d="M21 3l-7 7"></path>
+                <path d="M3 21l7-7"></path>
+            </svg>
+            <svg class="expand-icon" id="minimize-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                <path d="M8 3v3a2 2 0 0 1-2 2H3"></path>
+                <path d="M21 8h-3a2 2 0 0 1-2-2V3"></path>
+                <path d="M3 16h3a2 2 0 0 1 2 2v3"></path>
+                <path d="M16 21v-3a2 2 0 0 1 2-2h3"></path>
+            </svg>
+        </button>
+        <button id="theme-toggle" aria-label="Toggle dark mode">
+            <svg class="theme-icon" id="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+            <svg class="theme-icon" id="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+        </button>
+    </div>
 </div>
 
 <div id="conversation">
 
 <div class="chatbot-message chatbot">
 
-<p>Hi! I'm your AI assistant 👋 How can I help?</p>
+<p>How can I help you today? Please select from the following options:</p>
+
+<div class="quick-options">
+    <button class="option-button" data-option="records">View Health Records</button>
+    <button class="option-button" data-option="doctor">Ask a Doctor</button>
+    <button class="option-button" data-option="lab">Lab Test Explanation</button>
+    <button class="option-button" data-option="history">Health History Summary</button>
+    <button class="option-button" data-option="upload">Upload/Analyze Reports</button>
+    <button class="option-button" data-option="medication">Medication Reminders</button>
+    <button class="option-button" data-option="sharing">Record Sharing</button>
+    <button class="option-button" data-option="help">General Help</button>
+</div>
+
+<div class="timestamp">12:00 PM</div>
 
 </div>
 
@@ -170,7 +474,17 @@ body {
 
 <form id="input-form">
 
-<input id="input-field" type="text" placeholder="Type your message...">
+<button id="mic-button" type="button" aria-label="Voice input">
+    <div class="voice-wave">
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+    </div>
+</button>
+
+<input id="input-field" type="text" placeholder="Ask me anything..." autocomplete="off" />
 
 <button id="submit-button" type="submit">Send</button>
 
@@ -180,468 +494,292 @@ body {
 
 <script>
 
-const GEMINI_API_KEY = "AIzaSyC8KBJ6ooV-2k1h_pvqFr2W13hsTL7DWvo";
+const GEMINI_API_KEY = "AIzaSyC0YpBSH-rfgSAf1Jkc-O1l6ULtliuE6X8";
 
-const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+const featuresPrompt = `You are HealthBot. You help users with health records and medical information.
+
+IMPORTANT: ALWAYS keep your answers extremely brief and concise. Use no more than 2-3 short sentences. 
+Focus ONLY on essential information. Avoid detailed explanations or examples unless specifically requested.
+Use bullet points for lists when appropriate. Be direct and to the point.
+
+You can help users with:
+1. View Health Records
+2. Ask a Doctor
+3. Lab Test Explanation
+4. Health History Summary
+5. Upload/Analyze Reports
+6. Medication Reminders
+7. Record Sharing
+8. General Help`;
+
+document.addEventListener("DOMContentLoaded", () => {
+    loadChatHistory();
+    initThemeToggle();
+    initVoiceInput();
+    initExpandToggle();
+    initOptionButtons();
+});
+
+function initOptionButtons() {
+    const optionButtons = document.querySelectorAll('.option-button');
+    
+    optionButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const option = this.getAttribute('data-option');
+            let message = '';
+            
+            switch(option) {
+                case 'records':
+                    message = 'I want to view my health records';
+                    break;
+                case 'doctor':
+                    message = 'I need to ask a doctor a question';
+                    break;
+                case 'lab':
+                    message = 'I need help understanding my lab test results';
+                    break;
+                case 'history':
+                    message = 'Show me my health history summary';
+                    break;
+                case 'upload':
+                    message = 'I want to upload and analyze my medical reports';
+                    break;
+                case 'medication':
+                    message = 'I need help with medication reminders';
+                    break;
+                case 'sharing':
+                    message = 'I want to share my health records';
+                    break;
+                case 'help':
+                    message = 'I need general help with the system';
+                    break;
+            }
+            
+            if (message) {
+                document.getElementById('input-field').value = message;
+                sendMessage();
+            }
+        });
+    });
+}
+
+document.getElementById("input-form").addEventListener("submit", function(event) {
+    event.preventDefault();
+    sendMessage();
+});
+
+function initExpandToggle() {
+    const expandToggle = document.getElementById("expand-toggle");
+    const expandIcon = document.getElementById("expand-icon");
+    const minimizeIcon = document.getElementById("minimize-icon");
+    const chatbotContainer = document.querySelector(".chatbot-container");
+    const conversation = document.getElementById("conversation");
+    
+    expandToggle.addEventListener("click", () => {
+        chatbotContainer.classList.toggle("fullscreen");
+        
+        if (chatbotContainer.classList.contains("fullscreen")) {
+            expandIcon.style.display = "none";
+            minimizeIcon.style.display = "block";
+            // For accessibility
+            expandToggle.setAttribute("aria-label", "Minimize chat");
+        } else {
+            expandIcon.style.display = "block";
+            minimizeIcon.style.display = "none";
+            // For accessibility
+            expandToggle.setAttribute("aria-label", "Expand chat");
+        }
+        
+        // Scroll to bottom after transition
+        setTimeout(() => {
+            conversation.scrollTop = conversation.scrollHeight;
+        }, 300);
+    });
+    
+    // Add keyboard shortcut (Esc key) to exit fullscreen
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && chatbotContainer.classList.contains("fullscreen")) {
+            chatbotContainer.classList.remove("fullscreen");
+            expandIcon.style.display = "block";
+            minimizeIcon.style.display = "none";
+            expandToggle.setAttribute("aria-label", "Expand chat");
+        }
+    });
+}
+
+function initThemeToggle() {
+    const themeToggle = document.getElementById("theme-toggle");
+    const moonIcon = document.getElementById("moon-icon");
+    const sunIcon = document.getElementById("sun-icon");
+    const html = document.documentElement;
+    
+    // Check for saved theme preference or system preference
+    const savedTheme = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    
+    if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+        html.classList.replace("light", "dark");
+        moonIcon.style.display = "none";
+        sunIcon.style.display = "block";
+    }
+    
+    themeToggle.addEventListener("click", () => {
+        if (html.classList.contains("light")) {
+            html.classList.replace("light", "dark");
+            moonIcon.style.display = "none";
+            sunIcon.style.display = "block";
+            localStorage.setItem("theme", "dark");
+        } else {
+            html.classList.replace("dark", "light");
+            moonIcon.style.display = "block";
+            sunIcon.style.display = "none";
+            localStorage.setItem("theme", "light");
+        }
+    });
+}
+
+function initVoiceInput() {
+    const micButton = document.getElementById("mic-button");
+    const inputField = document.getElementById("input-field");
+    let isRecording = false;
+    let recognition;
+    
+    // Check if browser supports speech recognition
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        
+        recognition.onstart = function() {
+            isRecording = true;
+            micButton.querySelector('.voice-wave').classList.add('active-recording');
+            inputField.placeholder = "Listening...";
+        };
+        
+        recognition.onend = function() {
+            isRecording = false;
+            micButton.querySelector('.voice-wave').classList.remove('active-recording');
+            inputField.placeholder = "Ask me anything...";
+        };
+        
+        recognition.onresult = function(event) {
+            const transcript = Array.from(event.results)
+                .map(result => result[0])
+                .map(result => result.transcript)
+                .join('');
+            
+            inputField.value = transcript;
+            
+            // If it's a final result, send the message after a short delay
+            if (event.results[0].isFinal) {
+                setTimeout(() => {
+                    recognition.stop();
+                    if (transcript.trim()) {
+                        sendMessage();
+                    }
+                }, 1000);
+            }
+        };
+        
+        recognition.onerror = function(event) {
+            console.error('Speech recognition error:', event.error);
+            recognition.stop();
+            isRecording = false;
+            micButton.querySelector('.voice-wave').classList.remove('active-recording');
+            inputField.placeholder = "Ask me anything...";
+        };
+        
+        micButton.addEventListener('click', function() {
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        });
+    } else {
+        // Browser doesn't support speech recognition
+        micButton.style.display = 'none';
+        console.log('Speech recognition not supported by this browser');
+    }
+}
+
+function sendMessage() {
+    const inputField = document.getElementById("input-field");
+    const userInput = inputField.value.trim();
+    if (!userInput) return;
+
+    displayMessage(userInput, "user");
+    inputField.value = "";
+    inputField.focus();
+
+    // Add typing indicator
+    const typingIndicator = document.createElement('div');
+    typingIndicator.classList.add('chatbot-message', 'chatbot');
+    typingIndicator.innerHTML = `<div class="typing-indicator"><span></span><span></span><span></span></div>`;
+    document.getElementById("conversation").appendChild(typingIndicator);
+
+    fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: `${featuresPrompt}\nUser: ${userInput}\nRemember, be extremely brief and concise.` }] }]
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`API Error: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Remove typing indicator
+        typingIndicator.remove();
+        
+        const botReply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't process your request.";
+        displayMessage(botReply, "bot");
+        saveChatHistory(userInput, botReply);
+    })
+    .catch(error => {
+        // Remove typing indicator
+        typingIndicator.remove();
+        
+        console.error("API Error:", error);
+        displayMessage("Sorry, I couldn't process your request. Please try again.", "bot");
+        saveChatHistory(userInput, "API error occurred.");
+    });
+}
 
 function displayMessage(message, sender) {
-    let conversation = document.getElementById("conversation");
-    let msgDiv = document.createElement("div");
+    const conversation = document.getElementById("conversation");
+    const msgDiv = document.createElement("div");
     msgDiv.classList.add("chatbot-message", sender === "user" ? "user-message" : "chatbot");
-    msgDiv.innerHTML = `<p>${message}</p>`;
+
+    // Add timestamp
+    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    msgDiv.innerHTML = `<p>${message}</p><div class="timestamp">${timestamp}</div>`;
+
     conversation.appendChild(msgDiv);
     conversation.scrollTop = conversation.scrollHeight;
 }
 
-const predefinedResponses = {
-    "view records": "🔍 Let's access your health records securely. Please choose what you'd like to view:\n1. Recent visits\n2. Lab results\n3. Prescriptions\n4. Vaccination history\nEnter the number of your choice.",
-    
-    "add record": "📝 I'll help you add a new medical record. What type would you like to add?\n1. Doctor Visit (includes date, doctor, diagnosis)\n2. Lab Results (includes test type, values, date)\n3. Prescription (includes medication, dosage, duration)\n4. Vaccination (includes vaccine type, date, batch number)\nSelect a number to continue.",
-    
-    "share records": "🤝 Record sharing setup:\n1. Which healthcare provider needs access?\n- Your doctor's name\n- Hospital/Clinic name\n2. Access duration needed?\n- Temporary (specify days)\n- Permanent\nLet's start with the provider's name:",
-    
-    "weight loss": "⚖️ Let's create your personalized weight loss journey:\n1. Current weight (kg)?\n2. Target weight (kg)?\n3. Weekly activity level?\n   - Sedentary (mostly sitting)\n   - Moderate (some exercise)\n   - Active (regular exercise)\n4. Any health conditions?\nStart with #1:",
-    
-    "weight gain": "💪 Let's build your muscle gain program:\n1. Current weight (kg)?\n2. Target weight (kg)?\n3. Exercise experience?\n   - Beginner (< 1 year)\n   - Intermediate (1-3 years)\n   - Advanced (3+ years)\n4. Training preference?\n   - Home workouts\n   - Gym access\nStart with #1:",
-    
-    "diabetes care": "🩺 For personalized diabetes management:\n1. Current blood sugar level?\n   - Fasting\n   - Post-meal\n2. Are you on medication?\n   - Type of medication\n   - Dosage\n3. Recent A1C level?\n4. Diet preferences?\nLet's begin with your blood sugar level:",
-    
-    "bp control": "❤️ For better blood pressure management:\n1. Recent BP readings?\n   - Systolic (top number)\n   - Diastolic (bottom number)\n2. Current medications?\n3. Daily salt intake?\n   - Low (< 1500mg)\n   - Medium (1500-2300mg)\n   - High (> 2300mg)\nStart with your BP reading:",
-    
-    "daily exercise": "🎯 Custom workout planning:\n1. Your main goal?\n   - Weight management\n   - Muscle building\n   - Cardiovascular health\n   - Overall fitness\n2. Available time per day?\n3. Preferred workout type?\n   - Home exercises\n   - Outdoor activities\n   - Gym training\nLet's start with your goal:",
-    
-    "diet plan": "🥗 Personalized nutrition planning:\n1. Any dietary restrictions?\n   - Vegetarian/Vegan\n   - Gluten-free\n   - Dairy-free\n   - None\n2. Daily meal preference?\n   - 3 main meals\n   - 5-6 smaller meals\n3. Any food allergies?\nStart with your dietary restrictions:",
-    
-    "help": "ℹ️ Available commands:\n📋 Health Records:\n- view records\n- add record\n- share records\n\n💪 Fitness & Nutrition:\n- weight loss\n- weight gain\n- daily exercise\n- diet plan\n\n🏥 Health Management:\n- diabetes care\n- bp control\n\nType any command to begin!"
-};
-
-// Add a new object to track conversation states
-const conversationState = {
-    currentCommand: null,
-    step: 0,
-    answers: {}
-};
-
-function handlePredefinedResponse(userInput) {
-    if (predefinedResponses[userInput.toLowerCase()]) {
-        conversationState.currentCommand = userInput.toLowerCase();
-        conversationState.step = 1;
-        conversationState.answers = {};
-        return predefinedResponses[userInput.toLowerCase()];
-    }
-    
-    if (conversationState.currentCommand) {
-        conversationState.answers[conversationState.step] = userInput;
-        
-        switch (conversationState.currentCommand) {
-            case "weight loss":
-                if (conversationState.step === 1) {
-                    conversationState.step++;
-                    return "Great! Now please provide #2: Your target weight (kg)?";
-                } else if (conversationState.step === 2) {
-                    conversationState.step++;
-                    return "Last question: Any health conditions we should consider?";
-                } else if (conversationState.step === 3) {
-                    const plan = generateWeightLossPlan(conversationState.answers);
-                    conversationState.currentCommand = null;
-                    return plan;
-                }
-                break;
-            case "weight gain":
-                if (conversationState.step === 1) {
-                    conversationState.step++;
-                    return "Great! Now please provide #2: Your target weight (kg)?";
-                } else if (conversationState.step === 2) {
-                    conversationState.step++;
-                    return "Last question: What's your exercise experience (beginner/intermediate/advanced)?";
-                } else if (conversationState.step === 3) {
-                    const plan = generateWeightGainPlan(conversationState.answers);
-                    conversationState.currentCommand = null;
-                    return plan;
-                }
-                break;
-            case "add record":
-                if (conversationState.step === 1) {
-                    const recordType = parseInt(userInput);
-                    if (recordType === 1) {
-                        conversationState.recordType = "Doctor Visit";
-                        conversationState.step++;
-                        return "Please enter the date of visit (DD/MM/YYYY):";
-                    } else if (recordType === 2) {
-                        conversationState.recordType = "Lab Results";
-                        conversationState.step++;
-                        return "Please enter the date of test (DD/MM/YYYY):";
-                    } else if (recordType === 3) {
-                        conversationState.recordType = "Prescription";
-                        conversationState.step++;
-                        return "Please enter the prescription date (DD/MM/YYYY):";
-                    } else if (recordType === 4) {
-                        conversationState.recordType = "Vaccination";
-                        conversationState.step++;
-                        return "Please enter the vaccination date (DD/MM/YYYY):";
-                    }
-                    return "Please select a valid option (1-4):";
-                } else if (conversationState.step === 2) {
-                    conversationState.step++;
-                    switch(conversationState.recordType) {
-                        case "Doctor Visit":
-                            return "Enter doctor's name:";
-                        case "Lab Results":
-                            return "Enter test type (e.g., Blood Test, X-Ray):";
-                        case "Prescription":
-                            return "Enter medication name:";
-                        case "Vaccination":
-                            return "Enter vaccine name:";
-                    }
-                } else if (conversationState.step === 3) {
-                    conversationState.step++;
-                    switch(conversationState.recordType) {
-                        case "Doctor Visit":
-                            return "Enter diagnosis/reason for visit:";
-                        case "Lab Results":
-                            return "Enter test results/values:";
-                        case "Prescription":
-                            return "Enter dosage (e.g., 500mg twice daily):";
-                        case "Vaccination":
-                            return "Enter batch number:";
-                    }
-                } else if (conversationState.step === 4) {
-                    const record = generateMedicalRecord(conversationState.recordType, conversationState.answers);
-                    conversationState.currentCommand = null;
-                    return record;
-                }
-                break;
-            case "view records":
-                if (conversationState.step === 1) {
-                    const viewType = parseInt(userInput);
-                    if (viewType >= 1 && viewType <= 4) {
-                        const record = generateViewRecord(viewType);
-                        conversationState.currentCommand = null;
-                        return record;
-                    }
-                    return "Please select a valid option (1-4):";
-                }
-                break;
-            case "diabetes care":
-                if (conversationState.step === 1) {
-                    conversationState.step++;
-                    return "Thank you. Are you currently taking any diabetes medication? If yes, please specify the type and dosage:";
-                } else if (conversationState.step === 2) {
-                    conversationState.step++;
-                    return "What was your most recent A1C level?";
-                } else if (conversationState.step === 3) {
-                    conversationState.step++;
-                    return "Last question: Do you have any dietary preferences or restrictions?";
-                } else if (conversationState.step === 4) {
-                    const plan = generateDiabetesCareAdvice(conversationState.answers);
-                    conversationState.currentCommand = null;
-                    return plan;
-                }
-                break;
-            case "bp control":
-                if (conversationState.step === 1) {
-                    conversationState.step++;
-                    return "Are you currently taking any blood pressure medications? If yes, please specify:";
-                } else if (conversationState.step === 2) {
-                    conversationState.step++;
-                    return "What is your daily salt intake? (low/medium/high):";
-                } else if (conversationState.step === 3) {
-                    const plan = generateBPControlAdvice(conversationState.answers);
-                    conversationState.currentCommand = null;
-                    return plan;
-                }
-                break;
-            case "daily exercise":
-                if (conversationState.step === 1) {
-                    conversationState.step++;
-                    return "Great! How much time can you dedicate to exercise per day (in minutes)?";
-                } else if (conversationState.step === 2) {
-                    conversationState.step++;
-                    return "Last question: What's your preferred workout type (home/outdoor/gym)?";
-                } else if (conversationState.step === 3) {
-                    const plan = generateExercisePlan(conversationState.answers);
-                    conversationState.currentCommand = null;
-                    return plan;
-                }
-                break;
-            case "diet plan":
-                if (conversationState.step === 1) {
-                    conversationState.step++;
-                    return "Great! Now for #2: What's your daily meal preference (3 main meals or 5-6 smaller meals)?";
-                } else if (conversationState.step === 2) {
-                    conversationState.step++;
-                    return "Last question: Do you have any food allergies? If none, type 'none'.";
-                } else if (conversationState.step === 3) {
-                    const plan = generateDietPlan(conversationState.answers);
-                    conversationState.currentCommand = null;
-                    return plan;
-                }
-                break;
-        }
-    }
-    return null;
+function saveChatHistory(userMessage, botReply) {
+    const history = JSON.parse(localStorage.getItem("chatHistory")) || [];
+    history.push({ sender: "user", message: userMessage });
+    history.push({ sender: "bot", message: botReply });
+    localStorage.setItem("chatHistory", JSON.stringify(history));
 }
 
-// Move generateDietPlan function outside of handlePredefinedResponse
-function generateDietPlan(answers) {
-    const dietaryRestriction = answers[1].toLowerCase();
-    const mealPreference = answers[2].toLowerCase();
-    const allergies = answers[3].toLowerCase();
-    
-    let plan = `🥗 Your Personalized Nutrition Plan:\n\n`;
-    plan += `Dietary Type: ${dietaryRestriction}\n`;
-    plan += `Meal Schedule: ${mealPreference}\n`;
-    plan += `Allergies: ${allergies}\n\n`;
-    
-    plan += `📋 Daily Nutrition Guidelines:\n`;
-    plan += `- Protein: Plant-based sources (legumes, tofu, tempeh)\n`;
-    plan += `- Carbs: Whole grains, fruits, vegetables\n`;
-    plan += `- Fats: Nuts, seeds, avocado\n`;
-    plan += `- Iron: Leafy greens, fortified cereals\n`;
-    plan += `- B12: Fortified foods or supplements\n\n`;
-    
-    if (mealPreference.includes('3')) {
-        plan += `🕒 Meal Schedule:\n`;
-        plan += `- Breakfast (7-9 AM): Hearty meal with protein\n`;
-        plan += `- Lunch (12-2 PM): Balanced main meal\n`;
-        plan += `- Dinner (6-8 PM): Light but nutritious\n`;
-    } else {
-        plan += `🕒 Meal Schedule:\n`;
-        plan += `- Early breakfast (7 AM)\n`;
-        plan += `- Mid-morning snack (10 AM)\n`;
-        plan += `- Lunch (1 PM)\n`;
-        plan += `- Afternoon snack (4 PM)\n`;
-        plan += `- Dinner (7 PM)\n`;
-        plan += `- Optional evening snack (9 PM)\n`;
-    }
-    
-    plan += `\n💡 Tips:\n`;
-    plan += `- Stay hydrated (8-10 glasses of water)\n`;
-    plan += `- Include variety of colors in meals\n`;
-    plan += `- Plan meals in advance\n`;
-    plan += `- Read food labels carefully\n`;
-    
-    if (allergies !== 'none') {
-        plan += `\n⚠️ Important: Always check food labels for ${allergies} content.`;
-    }
-    
-    return plan;
+function loadChatHistory() {
+    const history = JSON.parse(localStorage.getItem("chatHistory")) || [];
+    history.forEach(entry => displayMessage(entry.message, entry.sender));
 }
 
-// Add this new function after other generate functions
-function generateBPControlAdvice(answers) {
-    const bpReading = answers[1];
-    const medications = answers[2];
-    const saltIntake = answers[3].toLowerCase();
-    
-    let [systolic, diastolic] = bpReading.split('/').map(num => parseInt(num.trim()));
-    
-    let advice = `❤️ Your Blood Pressure Management Plan:\n\n`;
-    advice += `📊 Current BP: ${systolic}/${diastolic} mmHg\n`;
-    
-    // BP Category Assessment
-    if (systolic >= 180 || diastolic >= 120) {
-        advice += `⚠️ HYPERTENSIVE CRISIS - Seek emergency care immediately!\n\n`;
-    } else if (systolic >= 140 || diastolic >= 90) {
-        advice += `⚠️ Your blood pressure is high. Consult your healthcare provider.\n\n`;
-    } else if (systolic >= 120 || diastolic >= 80) {
-        advice += `⚡ Your blood pressure is elevated. Let's work on lifestyle changes.\n\n`;
-    } else {
-        advice += `✅ Your blood pressure is in the normal range.\n\n`;
-    }
-    
-    advice += `💊 Current Medications: ${medications}\n`;
-    advice += `🧂 Salt Intake Level: ${saltIntake}\n\n`;
-    
-    advice += `Recommendations:\n`;
-    advice += `- Monitor BP regularly\n`;
-    
-    // Salt intake specific recommendations
-    if (saltIntake === 'high') {
-        advice += `⚠️ High Salt Intake Recommendations:\n`;
-        advice += `- Reduce salt intake to less than 1500mg/day\n`;
-        advice += `- Read food labels for sodium content\n`;
-        advice += `- Cook meals at home to control salt\n`;
-        advice += `- Use herbs and spices instead of salt\n`;
-    } else if (saltIntake === 'medium') {
-        advice += `📝 Moderate Salt Intake Recommendations:\n`;
-        advice += `- Maintain current salt intake below 2300mg/day\n`;
-        advice += `- Be mindful of hidden sodium in processed foods\n`;
-        advice += `- Balance salt with potassium-rich foods\n`;
-    } else {
-        advice += `✅ Low Salt Intake Recommendations:\n`;
-        advice += `- Continue maintaining low salt diet\n`;
-        advice += `- Monitor for any symptoms of low sodium\n`;
-        advice += `- Ensure adequate mineral intake\n`;
-    }
-    
-    // General recommendations
-    advice += `\nGeneral Lifestyle Recommendations:\n`;
-    advice += `- Exercise 30 minutes daily\n`;
-    advice += `- Practice stress management techniques\n`;
-    advice += `- Limit alcohol consumption\n`;
-    advice += `- Maintain healthy weight\n`;
-    advice += `- Get adequate sleep (7-8 hours)\n`;
-    
-    if (!medications.toLowerCase().includes('no')) {
-        advice += `- Take medications as prescribed\n`;
-    }
-    
-    if (systolic >= 140 || diastolic >= 90) {
-        advice += `\n⚠️ Important: Schedule a follow-up with your healthcare provider.`;
-    }
-    
-    return advice;
-}
+</script>
 
-// Add this new function after generateMedicalRecord
-function generateDiabetesCareAdvice(answers) {
-    const bloodSugar = answers[1];
-    const medication = answers[2];
-    const a1c = answers[3];
-    const diet = answers[4];
-    
-    let advice = `🩺 Your Personalized Diabetes Management Plan:\n\n`;
-    
-    // Blood sugar analysis
-    advice += `📊 Current Blood Sugar: ${bloodSugar} mg/dL\n`;
-    if (bloodSugar > 180) {
-        advice += `⚠️ Your blood sugar appears elevated. Consider immediate consultation.\n`;
-    }
-    
-    // Medication info
-    advice += `💊 Medication Status: ${medication}\n`;
-    
-    // A1C information
-    advice += `🔬 A1C Level: ${a1c}%\n`;
-    
-    // Diet preferences
-    advice += `🥗 Dietary Considerations: ${diet}\n\n`;
-    
-    advice += `Recommendations:\n`;
-    advice += `- Monitor blood sugar levels regularly\n`;
-    advice += `- Keep a food and medication diary\n`;
-    advice += `- Exercise moderately for 30 minutes daily\n`;
-    advice += `- Stay hydrated\n`;
-    advice += `- Schedule regular check-ups\n\n`;
-    
-    if (bloodSugar > 180 || parseFloat(a1c) > 7) {
-        advice += `⚠️ Important: Please consult your healthcare provider soon for medication adjustment.`;
-    }
-    
-    return advice;
-}
+</body>
 
-// Add this new function after generateMedicalRecord
-function generateViewRecord(viewType) {
-    const mockRecords = {
-        1: `📋 Recent Doctor Visits:\n
-- 15/03/2024: Dr. Smith - Regular Checkup
-- 28/02/2024: Dr. Johnson - Flu Symptoms
-- 10/01/2024: Dr. Davis - Annual Physical\n
-To view detailed information about a visit, use "view visit" command followed by the date.`,
-
-        2: `🔬 Recent Lab Results:\n
-- 15/03/2024: Complete Blood Count - Normal
-- 28/02/2024: Lipid Panel - Slightly Elevated
-- 10/01/2024: Thyroid Function - Normal\n
-For detailed results, use "view lab" command followed by the date.`,
-
-        3: `💊 Current Prescriptions:\n
-- Amoxicillin 500mg - 3x daily (ends 20/03/2024)
-- Vitamin D3 - 1x daily (ongoing)
-- Ibuprofen 400mg - As needed\n
-For prescription details, use "view prescription" command followed by the medication name.`,
-
-        4: `💉 Vaccination History:\n
-- COVID-19 Booster (10/01/2024)
-- Flu Shot (15/09/2023)
-- Tetanus (05/03/2023)\n
-For vaccination details, use "view vaccination" command followed by the vaccine name.`
-    };
-
-    return mockRecords[viewType] || "No records found for this category.";
-}
-
-function generateMedicalRecord(type, answers) {
-    const date = answers[2];
-    const detail1 = answers[3];
-    const detail2 = answers[4];
-    
-    let recordSummary = `✅ ${type} Record Added Successfully!\n\n`;
-    recordSummary += `📅 Date: ${date}\n`;
-    
-    switch(type) {
-        case "Doctor Visit":
-            recordSummary += `👨‍⚕️ Doctor: ${detail1}\n`;
-            recordSummary += `📋 Diagnosis: ${detail2}`;
-            break;
-        case "Lab Results":
-            recordSummary += `🔬 Test Type: ${detail1}\n`;
-            recordSummary += `📊 Results: ${detail2}`;
-            break;
-        case "Prescription":
-            recordSummary += `💊 Medication: ${detail1}\n`;
-            recordSummary += `📝 Dosage: ${detail2}`;
-            break;
-        case "Vaccination":
-            recordSummary += `💉 Vaccine: ${detail1}\n`;
-            recordSummary += `🔢 Batch Number: ${detail2}`;
-            break;
-    }
-    
-    return recordSummary + "\n\nRecord has been saved to your health profile.";
-}
-
-function generateWeightGainPlan(answers) {
-    const currentWeight = parseFloat(answers[1]);
-    const targetWeight = parseFloat(answers[2]);
-    const experience = answers[3].toLowerCase();
-    
-    const workoutIntensity = {
-        'beginner': '3 times per week',
-        'intermediate': '4-5 times per week',
-        'advanced': '5-6 times per week'
-    };
-    
-    return `💪 Your Personalized Muscle Gain Program:\n
-- Current: ${currentWeight}kg → Target: ${targetWeight}kg
-- Workout Frequency: ${workoutIntensity[experience] || '3-4 times per week'}
-- Progressive overload training
-- Daily Protein: ${Math.round(currentWeight * 2)}g
-- Caloric surplus: 300-500 calories/day
-- Rest: 7-8 hours daily
-- Track progress weekly\n
-Recommended Exercises:
-- Compound movements (Squats, Deadlifts, Bench Press)
-- Progressive overload principle
-- ${experience === 'beginner' ? 'Focus on form and technique' : 
-   experience === 'intermediate' ? 'Include isolation exercises' : 
-   'Advanced training splits and periodization'}`;
-}
-
-function generateWeightLossPlan(answers) {
-    const currentWeight = parseFloat(answers[1]);
-    const targetWeight = parseFloat(answers[2]);
-    const healthConditions = answers[3];
-    
-    return `🏃‍♂️ Your Personalized Weight Loss Plan:\n
-- Current: ${currentWeight}kg → Target: ${targetWeight}kg
-- Recommended weekly loss: 0.5-1kg
-- Exercise: 45 mins cardio (${healthConditions.toLowerCase().includes('joint') ? 'swimming/cycling' : 'walking/jogging'})
-- Diet: High protein, low carb meals
-- Caloric deficit: 500 calories/day
-- Track progress weekly
-${healthConditions ? '\nNote: Considering your ' + healthConditions + ', please consult your doctor before starting this plan.' : ''}`;
-}
-
-// Add this function before sendMessage
-function generateExercisePlan(answers) {
-    const goal = answers[1].toLowerCase();
-    const timeAvailable = parseInt(answers[2]);
-    const workoutType = answers[3].toLowerCase();
-    
-    let plan = `🎯 Your Personalized Exercise Plan:\n\n`;
-    plan += `Goal: ${goal}\n`;
-    plan += `Time Available: ${timeAvailable} minutes/day\n`;
-    plan += `
+</html>

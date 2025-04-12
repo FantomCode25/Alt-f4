@@ -995,10 +995,33 @@ def doctor_dashboard():
         "_id": {"$in": [ObjectId(id) for id in patient_ids]}
     }))
     
+    # Get shared medical files for this doctor
+    # This is the key fix - we need to query the medical_files collection for documents shared with this doctor
+    recent_uploads = list(medical_files.find({
+        "shared_with": str(doctor_id)
+    }).sort("upload_date", -1))
+    
+    # Enrich shared files with patient names
+    for file in recent_uploads:
+        try:
+            patient_id = file.get("patient_id")
+            if patient_id:
+                patient = db.patients.find_one({"_id": ObjectId(patient_id)})
+                if patient:
+                    file["patient_name"] = patient.get("name", "Unknown Patient")
+                else:
+                    file["patient_name"] = "Unknown Patient"
+            else:
+                file["patient_name"] = "Unknown Patient"
+        except Exception as e:
+            file["patient_name"] = "Unknown Patient"
+            app.logger.error(f"Error fetching patient for file: {str(e)}")
+    
     return render_template('doctor_dashboard.html',
                           doctor=doctor,
                           shared_records=shared_records,
                           authorized_patients=authorized_patients,
+                          recent_uploads=recent_uploads,
                           now=datetime.now())
 
 # --- Dedicated Patient Dashboard Route --- 
@@ -2513,12 +2536,12 @@ def share_medical_file(file_id):
             # Only the patient who owns the file or the uploader can share it
             if user_type == 'patient':
                 patient_id = ObjectId(user_id)
-                if file_data.get('patient_id') != patient_id:
+                if str(file_data.get('patient_id')) != str(patient_id):
                     flash('You do not have permission to share this file', 'danger')
                     return redirect(url_for('dashboard'))
             elif user_type == 'doctor':
                 doctor_id = ObjectId(user_id)
-                if file_data.get('uploader_id') != doctor_id:
+                if str(file_data.get('uploader_id')) != str(doctor_id):
                     flash('You do not have permission to share this file', 'danger')
                     return redirect(url_for('dashboard'))
             else:
@@ -2554,7 +2577,6 @@ def share_medical_file(file_id):
                 flash('Invalid provider type', 'danger')
                 return redirect(url_for('view_medical_file', file_id=file_id))
             
-            # Update the shared_with list in the file document
             # Initialize shared_with list if it doesn't exist
             if 'shared_with' not in file_data:
                 file_data['shared_with'] = []
@@ -2564,7 +2586,7 @@ def share_medical_file(file_id):
                 flash(f'File is already shared with {provider_name}', 'info')
                 return redirect(url_for('view_medical_file', file_id=file_id))
                 
-            # Add to shared_with list
+            # Add to shared_with list - store just the provider_id for consistent lookup
             medical_files.update_one(
                 {'_id': file_obj_id},
                 {'$addToSet': {'shared_with': provider_id}}
@@ -2591,11 +2613,32 @@ def share_medical_file(file_id):
             )
             
             # Update the patient's authorized_providers field to maintain the connection
-            if user_type == 'patient' and provider_type == 'doc':
-                patients.update_one(
-                    {'_id': patient_id},
-                    {'$addToSet': {'authorized_doctors': provider_id}}
-                )
+            if user_type == 'patient':
+                patient_id_obj = ObjectId(user_id)
+                if provider_type == 'doc':
+                    patients.update_one(
+                        {'_id': patient_id_obj},
+                        {'$addToSet': {'authorized_doctors': provider_id}}
+                    )
+                elif provider_type == 'hosp':
+                    patients.update_one(
+                        {'_id': patient_id_obj},
+                        {'$addToSet': {'authorized_hospitals': provider_id}}
+                    )
+            
+            # Create an entry in shared_files collection for better tracking
+            shared_file_entry = {
+                'file_id': str(file_obj_id),
+                'patient_id': str(file_data.get('patient_id')),
+                'shared_with_doctor': provider_id if provider_type == 'doc' else None,
+                'shared_with_hospital': provider_id if provider_type == 'hosp' else None,
+                'shared_date': datetime.now(),
+                'shared_until': share_until,
+                'shared_by': user_id,
+                'file_type': file_data.get('file_type', 'unknown'),
+                'description': file_data.get('description', '')
+            }
+            db.shared_files.insert_one(shared_file_entry)
             
             flash(f'Medical file shared successfully with {provider_name}', 'success')
             return redirect(url_for('view_medical_file', file_id=file_id))
